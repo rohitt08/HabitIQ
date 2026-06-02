@@ -14,19 +14,33 @@ export default function MorningMotivation() {
     if (!user?.morningMotivation) return;
     const today = new Date().toISOString().slice(0, 10);
     const seen = localStorage.getItem("morning-seen");
-    if (seen === today) return;
+    const cachedContent = localStorage.getItem("morning-content");
+    
+    // Ensure cached content is valid
+    if (seen === today && cachedContent && cachedContent !== "undefined" && cachedContent !== "null") {
+      setContent(cachedContent);
+      return;
+    }
+    
     setLoading(true);
     api
       .get("/ai/morning")
       .then((res) => {
-        setContent(res.data.content);
+        const text = res.data?.content || "Good morning! Let's build some great habits today.";
+        setContent(text);
         localStorage.setItem("morning-seen", today);
+        localStorage.setItem("morning-content", text);
+      })
+      .catch((err) => {
+        console.error("Failed to load morning motivation:", err);
+        const text = "Good morning! Ready to tackle your habits today?";
+        setContent(text);
+        // Do not cache the fallback so it can retry later
       })
       .finally(() => setLoading(false));
   }, [user?.morningMotivation]);
 
-  if (!user?.morningMotivation || dismissed || (!content && !loading))
-    return null;
+  if (!user?.morningMotivation || dismissed) return null;
 
   return (
     <div className="relative rounded-2xl p-5 glass overflow-hidden animate-slide-up">
