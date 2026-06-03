@@ -1,9 +1,16 @@
+import logger from "../utils/logger.js";
+
 export const notFound = (req, res, next) => {
     res.status(404).json({ message: `Route not found - ${req.originalUrl}` })
 };
 
 export const errorHandler = (err, req, res, next) => {
-    console.log(err);
+    logger.error(err, { 
+        requestId: req.id,
+        url: req.originalUrl,
+        method: req.method
+    });
+    
     const status =
         res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
     res.status(status).json({
