@@ -78,5 +78,7 @@ const habitSchema = new mongoose.Schema(
   }
 );
 
+habitSchema.index({ userId: 1, isArchived: 1 });
+
 export const HABIT_CATEGORIES = CATEGORIES;
 export default mongoose.model("Habit", habitSchema);
