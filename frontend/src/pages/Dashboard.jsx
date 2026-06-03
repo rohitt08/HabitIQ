@@ -229,11 +229,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">
             Hey {user?.name?.split(" ")[0]} 👋
           </h1>
-          <p className="text-sm text-muted mt-0.5">
+          <p className="text-sm text-muted mt-0.5 truncate">
             {new Date().toLocaleDateString(undefined, {
               weekday: "long",
               month: "long",
@@ -241,7 +241,7 @@ export default function Dashboard() {
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             className="btn-secondary"
             onClick={() => setSuggestOpen(true)}

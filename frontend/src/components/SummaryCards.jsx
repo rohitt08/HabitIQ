@@ -2,15 +2,12 @@ import { ListChecks, Flame, Trophy, TrendingUp } from "lucide-react";
 
 const Card = ({ icon: Icon, label, value, iconBg, iconFg }) => (
   <div className="card p-4 flex items-center gap-3 overflow-hidden relative">
-    <div
-      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-      style={{ background: iconBg, color: iconFg }}
-    >
+    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: iconBg, color: iconFg }}>
       <Icon size={18} />
     </div>
-    <div>
-      <div className="text-xs font-medium text-muted">{label}</div>
-      <div className="text-xl font-semibold">{value}</div>
+    <div className="min-w-0 flex-1">
+      <div className="text-xs font-medium text-muted truncate">{label}</div>
+      <div className="text-xl font-semibold truncate">{value}</div>
     </div>
   </div>
 );
