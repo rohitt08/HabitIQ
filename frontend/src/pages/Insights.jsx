@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   RefreshCw,
-  Brain,
   Trophy,
   CalendarRange,
   Activity,
@@ -23,7 +22,6 @@ import {
   Pie,
   Cell,
   Legend,
-  Cell as PieCell,
 } from "recharts";
 import api from "../api/axios.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -44,6 +42,24 @@ const PIE_COLORS = [
 ];
 
 const REPORT_CACHE_KEY = (weekStart) => `weekly-report-${weekStart}`;
+
+const DeltaPill = ({ delta, deltaPct }) => {
+  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const color =
+    delta > 0
+      ? "text-emerald-500 bg-emerald-500/10"
+      : delta < 0
+      ? "text-rose-500 bg-rose-500/10"
+      : "text-faint bg-[var(--chip-bg)]";
+  const label = delta === 0 ? "no change" : `${delta > 0 ? "+" : ""}${delta} (${deltaPct > 0 ? "+" : ""}${deltaPct}%)`;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${color}`}
+    >
+      <Icon size={12} /> {label}
+    </span>
+  );
+};
 
 export default function Insights() {
   const { theme } = useTheme();
@@ -93,7 +109,9 @@ export default function Insights() {
             const { content, generatedAt } = JSON.parse(cached);
             setReport(content);
             setReportGeneratedAt(new Date(generatedAt));
-          } catch {}
+          } catch {
+            // ignore cache parse errors
+          }
         } else {
           // auto-generate on first visit this week
           generateReport();
@@ -219,24 +237,6 @@ export default function Insights() {
 
   if (loading) return <LoadingSpinner full />;
 
-  const DeltaPill = () => {
-    const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
-    const color =
-      delta > 0
-        ? "text-emerald-500 bg-emerald-500/10"
-        : delta < 0
-        ? "text-rose-500 bg-rose-500/10"
-        : "text-faint bg-[var(--chip-bg)]";
-    const label = delta === 0 ? "no change" : `${delta > 0 ? "+" : ""}${delta} (${deltaPct > 0 ? "+" : ""}${deltaPct}%)`;
-    return (
-      <span
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${color}`}
-      >
-        <Icon size={12} /> {label}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -316,7 +316,7 @@ export default function Insights() {
           </div>
           <div className="mt-1 flex items-baseline gap-2">
             <div className="text-2xl font-semibold">{totalDone}</div>
-            <DeltaPill />
+            <DeltaPill delta={delta} deltaPct={deltaPct} />
           </div>
           <div className="text-xs text-muted mt-0.5">vs last week</div>
         </div>

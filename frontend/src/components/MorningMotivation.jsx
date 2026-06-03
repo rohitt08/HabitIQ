@@ -18,6 +18,7 @@ export default function MorningMotivation() {
     
     // Ensure cached content is valid
     if (seen === today && cachedContent && cachedContent !== "undefined" && cachedContent !== "null") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setContent(cachedContent);
       return;
     }
