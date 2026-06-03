@@ -14,12 +14,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
-      return;
-    }
     api
       .get("/auth/me")
       .then((res) => {
@@ -27,7 +21,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       })
       .catch(() => {
-        localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
       })
@@ -36,7 +29,6 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
     setUser(res.data.user);
     return res.data.user;
@@ -44,14 +36,17 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     const res = await api.post("/auth/register", { name, email, password });
-    localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
     setUser(res.data.user);
     return res.data.user;
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (err) {
+      console.error(err);
+    }
     localStorage.removeItem("user");
     setUser(null);
   };

@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.js";
+import userRepository from "../repositories/userRepository.js";
 
 export const protect = async (req, res, next) => {
   try {
     let token;
 
-    if (
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    } else if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer ")
     ) {
@@ -20,7 +22,7 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
+    const user = await userRepository.findById(decoded.id);
 
     if (!user) {
       return res

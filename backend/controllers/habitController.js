@@ -1,190 +1,70 @@
-import Habit from "../models/habit.js";
-import HabitLog from "../models/habitlog.js";
+import habitService from "../services/habitService.js";
 
-export const getHabits = async (req, res) => {
+export const getHabits = async (req, res, next) => {
   try {
-    const { includeArchived } = req.query;
-
-    const filter = { userId: req.user._id };
-
-    if (includeArchived !== "true") {
-      filter.isArchived = false;
-    }
-
-    const habits = await Habit.find(filter).sort({
-      order: 1,
-      createdAt: 1,
-    });
-
+    const habits = await habitService.getHabits(req.user._id, req.query.includeArchived);
     res.json(habits);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-export const createHabit = async (req, res) => {
+export const createHabit = async (req, res, next) => {
   try {
-    const {
-      name,
-      description,
-      category,
-      frequency,
-      targetDays,
-      color,
-      icon,
-    } = req.body;
-
-    if (!name) {
-      return res
-        .status(400)
-        .json({ message: "Habit name is required" });
-    }
-
-    const count = await Habit.countDocuments({
-      userId: req.user._id,
-    });
-
-    const habit = await Habit.create({
-      userId: req.user._id,
-      name,
-      description,
-      category,
-      frequency,
-      targetDays,
-      color,
-      icon,
-      order: count,
-    });
-
+    const habit = await habitService.createHabit(req.user._id, req.body);
     res.status(201).json(habit);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    if (err.message === "Habit name is required") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
   }
 };
 
-export const updateHabit = async (req, res) => {
+export const updateHabit = async (req, res, next) => {
   try {
-    const habit = await Habit.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
-
-    if (!habit) {
-      return res.status(404).json({
-        message: "Habit not found",
-      });
-    }
-
-    const fields = [
-      "name",
-      "description",
-      "category",
-      "frequency",
-      "targetDays",
-      "color",
-      "icon",
-      "order",
-    ];
-
-    for (const f of fields) {
-      if (req.body[f] !== undefined) {
-        habit[f] = req.body[f];
-      }
-    }
-
-    await habit.save();
-
+    const habit = await habitService.updateHabit(req.params.id, req.user._id, req.body);
     res.json(habit);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    if (err.message === "Habit not found") {
+      return res.status(404).json({ message: err.message });
+    }
+    next(err);
   }
 };
 
-export const deleteHabit = async (req, res) => {
+export const deleteHabit = async (req, res, next) => {
   try {
-    const habit = await Habit.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
-
-    if (!habit) {
-      return res.status(404).json({
-        message: "Habit not found",
-      });
+    await habitService.deleteHabit(req.params.id, req.user._id);
+    res.json({ message: "Habit Deleted" });
+  } catch (err) {
+    if (err.message === "Habit not found") {
+      return res.status(404).json({ message: err.message });
     }
-
-    await HabitLog.deleteMany({
-      habitId: habit._id,
-      userId: req.user._id,
-    });
-
-    res.json({message: "Habit Deleted"});
-} catch (err) {
-    res.status(500).json({message: err.message});
-}
+    next(err);
+  }
 };
 
-export const archiveHabit = async (req, res) => {
+export const archiveHabit = async (req, res, next) => {
   try {
-    const habit = await Habit.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
-
-    if (!habit) {
-      return res.status(404).json({
-        message: "Habit not found",
-      });
-    }
-
-    habit.isArchived = !habit.isArchived;
-
-    await habit.save();
-
+    const habit = await habitService.archiveHabit(req.params.id, req.user._id);
     res.json(habit);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    if (err.message === "Habit not found") {
+      return res.status(404).json({ message: err.message });
+    }
+    next(err);
   }
 };
 
-export const reorderHabits = async (req, res) => {
+export const reorderHabits = async (req, res, next) => {
   try {
-    const { order } = req.body; // array of habit ids
-
-    if (!Array.isArray(order)) {
-      return res.status(400).json({
-        message: "Order must be an array",
-      });
-    }
-
-    await Promise.all(
-      order.map((id, idx) =>
-        Habit.updateOne(
-          {
-            _id: id,
-            userId: req.user._id,
-          },
-          {
-            $set: { order: idx },
-          }
-        )
-      )
-    );
-
-    res.json({
-      message: "Reordered",
-    });
+    await habitService.reorderHabits(req.user._id, req.body.order);
+    res.json({ message: "Reordered" });
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    if (err.message === "Order must be an array") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
   }
 };

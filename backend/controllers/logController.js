@@ -1,254 +1,73 @@
-import HabitLog from "../models/habitlog.js";
-import Habit from "../models/habit.js";
-import { 
-    todayKey, 
-    last90Days,
-    lastNDays, 
-    calcStreak 
-} from "../utils/dateHelpers.js";
+import logService from "../services/logService.js";
 
-export const markComplete = async (req, res) => {
+export const markComplete = async (req, res, next) => {
   try {
     const { habitId, date } = req.body;
-
-    const completedDate = date || todayKey();
-
-    const habit = await Habit.findOne({
-      _id: habitId,
-      userId: req.user._id,
-    });
-
-    if (!habit) {
-      return res.status(404).json({
-        message: "Habit not found",
-      });
-    }
-
-    const log = await HabitLog.findOneAndUpdate(
-      {
-        userId: req.user._id,
-        habitId,
-        completedDate,
-      },
-      {
-        $setOnInsert: {
-          userId: req.user._id,
-          habitId,
-          completedDate,
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-
+    const log = await logService.markComplete(req.user._id, habitId, date);
     res.status(201).json(log);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    if (err.message === "Habit not found") {
+      return res.status(404).json({ message: err.message });
+    }
+    next(err);
   }
 };
 
-export const unmarkComplete = async (req, res) => {
+export const unmarkComplete = async (req, res, next) => {
   try {
     const { habitId, date } = req.body;
-
-    const completedDate = date || todayKey();
-
-    await HabitLog.findOneAndDelete({
-      userId: req.user._id,
-      habitId,
-      completedDate,
-    });
-
-    res.json({
-      message: "Unmarked",
-    });
+    await logService.unmarkComplete(req.user._id, habitId, date);
+    res.json({ message: "Unmarked" });
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-export const getToday = async ( req, res ) => {
-    try {
-        const logs = await HabitLog.find({
-            userId: req.user._id,
-            completedDate: todayKey()
-        });
-        res.json(logs);
-    } catch (err) {
-        res.status(500).json({message: err.message});
-    }
-};
-
-export const getRange = async (req, res) => {
+export const getToday = async (req, res, next) => {
   try {
-    const { start, end } = req.query;
-
-    const logs = await HabitLog.find({
-      userId: req.user._id,
-      completedDate: {
-        $gte: start,
-        $lte: end,
-      },
-    });
-
+    const logs = await logService.getTodayLogs(req.user._id);
     res.json(logs);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-export const getHeatmap = async (req, res) => {
+export const getRange = async (req, res, next) => {
   try {
-    const days = last90Days();
+    const { start, end } = req.query;
+    const logs = await logService.getRangeLogs(req.user._id, start, end);
+    res.json(logs);
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const logs = await HabitLog.find({
-      userId: req.user._id,
-      completedDate: {
-        $gte: days[0],
-        $lte: days[days.length - 1],
-      },
-    });
-
-    const counts = {};
-
-    for (const d of days) {
-      counts[d] = 0;
-    }
-
-    for (const l of logs) {
-      counts[l.completedDate] =
-        (counts[l.completedDate] || 0) + 1;
-    }
-
-    const data = days.map((d) => ({
-      date: d,
-      count: counts[d] || 0,
-    }));
-
+export const getHeatmap = async (req, res, next) => {
+  try {
+    const data = await logService.getHeatmap(req.user._id);
     res.json(data);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-export const getHabitStats = async (req, res) => {
+export const getHabitStats = async (req, res, next) => {
   try {
-    const habit = await Habit.findOne({
-      _id: req.params.habitId,
-      userId: req.user._id,
-    });
-
-    if (!habit) {
-      return res.status(404).json({
-        message: "Habit not found",
-      });
+    const stats = await logService.getHabitStats(req.user._id, req.params.habitId);
+    res.json(stats);
+  } catch (err) {
+    if (err.message === "Habit not found") {
+      return res.status(404).json({ message: err.message });
     }
-
-    const logs = await HabitLog.find({
-      userId: req.user._id,
-      habitId: habit._id,
-    }).sort({
-      completedDate: -1,
-    });
-
-    const dateKeys = logs.map((l) => l.completedDate);
-
-    const { current, longest } = calcStreak(dateKeys);
-
-    // completion rate since habit created
-
-const createdKey = habit.createdAt.toISOString().slice(0, 10);
-const today = todayKey();
-
-const start = new Date(createdKey);
-const end = new Date(today);
-
-const totalDays =
-  Math.max(
-    1,
-    Math.round((end - start) / (1000 * 60 * 60 * 24))
-  ) + 1;
-
-const completionRate = Math.round(
-  (logs.length / totalDays) * 100
-);
-
-// monthly breakdown (last 6 months)
-
-const monthly = {};
-
-for (const l of logs) {
-  const m = l.completedDate.slice(0, 7);
-
-  monthly[m] = (monthly[m] || 0) + 1;
-}
-
-res.json({
-  habit,
-  totalCompletions: logs.length,
-  currentStreak: current,
-  longestStreak: longest,
-  completionRate,
-  monthly,
-});
-  } catch(err) {
-    res.status(500).json({message: err.message});
+    next(err);
   }
-}
-
-export const getAllStats = async (req, res) => {
-  try {
-    const habits = await Habit.find({
-      userId: req.user._id,
-      isArchived: false,
-    });
-
-    const days = lastNDays(30);
-
-    const logs = await HabitLog.find({
-      userId: req.user._id,
-      completedDate: {
-        $gte: days[0],
-        $lte: days[days.length - 1],
-      },
-    });
-
-    const perHabit = habits.map((h) => {
-      const hLogs = logs.filter(
-        (l) => String(l.habitId) === String(h._id)
-      );
-
-      const keys = hLogs
-        .map((l) => l.completedDate)
-        .sort()
-        .reverse();
-
-      const { current, longest } = calcStreak(keys);
-
-      return {
-        habitId: h._id,
-        name: h.name,
-        icon: h.icon,
-        color: h.color,
-        category: h.category,
-        completions30d: hLogs.length,
-        currentStreak: current,
-        longestStreak: longest,
-      };
-    });
-    res.json({perHabit, days});
-} catch(err) {
-    res.status(500).json({message: err.message});
-}
 };
 
+export const getAllStats = async (req, res, next) => {
+  try {
+    const stats = await logService.getAllStats(req.user._id);
+    res.json(stats);
+  } catch (err) {
+    next(err);
+  }
+};
