@@ -345,10 +345,10 @@ export default function Dashboard() {
       <AIWeeklyReport />
 
       <div className="grid lg:grid-cols-12 gap-5">
-        <div className="col-span-8">
+        <div className="lg:col-span-8">
           <WeeklyGrid habits={habits} logsByHabit={weekLogsByHabit} />
         </div>
-        <div className="col-span-4">
+        <div className="lg:col-span-4">
           <HeatmapChart data={heatmap} />
         </div>
       </div>
