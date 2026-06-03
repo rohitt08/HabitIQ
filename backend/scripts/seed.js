@@ -166,9 +166,8 @@ const run = async () => {
 
         console.log(`Created user ${EMAIL}`);
     }
-};
 
-const createdHabits = [];
+    const createdHabits = [];
 
 for (let i = 0; i < HABITS.length; i++) {
     const h = HABITS[i];
@@ -240,7 +239,8 @@ console.log(`   Password:  ${PASSWORD}`);
 console.log(`   Habits:    ${createdHabits.length}`);
 console.log(`   Logs:      ~${totalLogs}`);
 
-await mongoose.disconnect();
+    await mongoose.disconnect();
+};
 
 run().catch(async (err) => {
     console.error("Seed Failed:", err);
