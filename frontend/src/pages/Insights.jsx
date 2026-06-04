@@ -49,8 +49,8 @@ const DeltaPill = ({ delta, deltaPct }) => {
     delta > 0
       ? "text-emerald-500 bg-emerald-500/10"
       : delta < 0
-      ? "text-rose-500 bg-rose-500/10"
-      : "text-faint bg-[var(--chip-bg)]";
+        ? "text-rose-500 bg-rose-500/10"
+        : "text-faint bg-[var(--chip-bg)]";
   const label = delta === 0 ? "no change" : `${delta > 0 ? "+" : ""}${delta} (${deltaPct > 0 ? "+" : ""}${deltaPct}%)`;
   return (
     <span
@@ -165,8 +165,8 @@ export default function Insights() {
   const deltaPct = totalLast
     ? Math.round(((totalDone - totalLast) / totalLast) * 100)
     : totalDone > 0
-    ? 100
-    : 0;
+      ? 100
+      : 0;
 
   const dailyData = thisWeek.map((d) => {
     const count = thisWeekLogs.filter((l) => l.completedDate === d.key).length;
@@ -553,9 +553,8 @@ export default function Insights() {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm truncate">{h.name}</div>
                       <div
-                        className={`text-xs font-medium ${
-                          cur > 0 ? "text-orange-500" : "text-faint"
-                        }`}
+                        className={`text-xs font-medium ${cur > 0 ? "text-orange-500" : "text-faint"
+                          }`}
                       >
                         🔥 {cur} day{cur === 1 ? "" : "s"}
                       </div>

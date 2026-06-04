@@ -18,7 +18,7 @@ export default function MonthlyBarChart({ data }) {
       <div className="text-sm font-medium mb-3">Last 30 days</div>
       <div style={{ width: "100%", height: 240 }}>
         <ResponsiveContainer>
-          <BarChart data={data}>
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
             <defs>
               <linearGradient id="monbar" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#fde68a" />
@@ -31,7 +31,7 @@ export default function MonthlyBarChart({ data }) {
               tick={{ fontSize: 11, fill: tick }}
               axisLine={false}
               tickLine={false}
-              interval={3}
+              interval={4}
             />
             <YAxis
               tick={{ fontSize: 12, fill: tick }}

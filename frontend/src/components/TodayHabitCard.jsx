@@ -40,7 +40,7 @@ export default function TodayHabitCard({
 
   return (
     <div
-      className={`card p-4 flex items-center gap-4 transition ${completed
+      className={`card p-4 flex items-center gap-4 transition select-none ${completed
         ? "ring-1 ring-brand-500/10 bg-brand-500/5 dark:bg-brand-500/3"
         : ""
         }`}

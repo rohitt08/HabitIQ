@@ -59,8 +59,8 @@ export default function HeatmapChart({ data = [] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-1">
+      <div className="overflow-x-auto pb-1">
+        <div className="flex gap-1 w-max">
           {cols.map((col, ci) => (
             <div key={ci} className="flex flex-col gap-1">
               {col.map((d, ri) =>

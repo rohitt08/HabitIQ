@@ -19,20 +19,22 @@ export default function Stats() {
     (async () => {
       setLoading(true);
       try {
-        const [statsRes, habitsRes] = await Promise.all([
-          api.get("/logs/stats"),
-          api.get("/habits"),
-        ]);
-        setStats(statsRes.data);
-        setHabits(habitsRes.data);
         const end = new Date();
         const start = subDays(end, 29);
-        const rangeRes = await api.get("/logs/range", {
-          params: {
-            start: format(start, "yyyy-MM-dd"),
-            end: format(end, "yyyy-MM-dd"),
-          },
-        });
+
+        const [statsRes, habitsRes, rangeRes] = await Promise.all([
+          api.get("/logs/stats"),
+          api.get("/habits"),
+          api.get("/logs/range", {
+            params: {
+              start: format(start, "yyyy-MM-dd"),
+              end: format(end, "yyyy-MM-dd"),
+            },
+          }),
+        ]);
+
+        setStats(statsRes.data);
+        setHabits(habitsRes.data);
         setLogs(rangeRes.data);
       } finally {
         setLoading(false);

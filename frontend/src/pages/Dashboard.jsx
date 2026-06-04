@@ -41,11 +41,17 @@ export default function Dashboard() {
       const start = week[0].key;
       const end = week[week.length - 1].key;
 
-      const [habitsRes, todayRes, rangeRes, heatRes] = await Promise.all([
+      const start90 = new Date();
+      start90.setDate(start90.getDate() - 89);
+      const s90 = start90.toISOString().slice(0, 10);
+      const e90 = new Date().toISOString().slice(0, 10);
+
+      const [habitsRes, todayRes, rangeRes, heatRes, allRange] = await Promise.all([
         api.get("/habits"),
         api.get("/logs/today"),
         api.get("/logs/range", { params: { start, end } }),
         api.get("/logs/heatmap"),
+        api.get("/logs/range", { params: { start: s90, end: e90 } }),
       ]);
 
       setHabits(habitsRes.data);
@@ -54,13 +60,6 @@ export default function Dashboard() {
       setHeatmap(heatRes.data);
 
       const byId = {};
-      const start90 = new Date();
-      start90.setDate(start90.getDate() - 89);
-      const s90 = start90.toISOString().slice(0, 10);
-      const e90 = new Date().toISOString().slice(0, 10);
-      const allRange = await api.get("/logs/range", {
-        params: { start: s90, end: e90 },
-      });
       for (const h of habitsRes.data) byId[h._id] = [];
       for (const l of allRange.data) {
         if (!byId[l.habitId]) byId[l.habitId] = [];

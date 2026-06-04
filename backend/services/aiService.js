@@ -45,10 +45,14 @@ class AIService {
       )
       .join("\n")}"\n\nPlease write the personalised weekly report now.`;
 
-    const { content } = await chatCompletion({
+    const { content, ok } = await chatCompletion({
       system: SYSTEM_PROMPTS.weekly,
       user: userMsg,
     });
+
+    if (!ok) {
+      throw new Error(content);
+    }
 
     await aiInsightRepository.create({
       userId,
@@ -62,10 +66,14 @@ class AIService {
   async suggestHabits(userId, goals, productiveTime, struggles) {
     const userMsg = `User goals: ${goals || "not provided"}\nMost productive time: ${productiveTime || "not provided"}\nPast Struggles: ${struggles || "not provided"}\n\nSuggest 3 personalised habits now. Return JSON only.`;
 
-    const { content } = await chatCompletion({
+    const { content, ok } = await chatCompletion({
       system: SYSTEM_PROMPTS.suggestion,
       user: userMsg,
     });
+
+    if (!ok) {
+      throw new Error(content);
+    }
 
     let suggestions = [];
     try {
@@ -126,10 +134,14 @@ class AIService {
 
     const userMsg = `Habit: ${habit.name} (${habit.category}).\nDescription: ${habit.description || "none"}.\nCurrent streak: ${current} days.\nLongest streak: ${longest} days. The ser just broke a strek. Write a warm, actionable 3-day recovery plan.`;
 
-    const { content } = await chatCompletion({
+    const { content, ok } = await chatCompletion({
       system: SYSTEM_PROMPTS.recovery,
       user: userMsg,
     });
+
+    if (!ok) {
+      throw new Error(content);
+    }
 
     await aiInsightRepository.create({
       userId,
@@ -170,10 +182,14 @@ class AIService {
 
     const userMsg = `User question: "${question}"\n\nUser data (last 30 days):\n${context}\n\nAnswer now.`;
 
-    const { content } = await chatCompletion({
+    const { content, ok } = await chatCompletion({
       system: SYSTEM_PROMPTS.chat,
       user: userMsg,
     });
+
+    if (!ok) {
+      throw new Error(content);
+    }
 
     await aiInsightRepository.create({
       userId,
@@ -220,11 +236,15 @@ class AIService {
 
     const userMsg = `Today's habits and streaks:\n${ctx}\n\nDone today: ${done}/${total}. Write the morning message now.`;
 
-    const { content } = await chatCompletion({
+    const { content, ok } = await chatCompletion({
       system: SYSTEM_PROMPTS.morning,
       user: userMsg,
       temperature: 0.8,
     });
+
+    if (!ok) {
+      throw new Error(content);
+    }
 
     await aiInsightRepository.create({
       userId,
