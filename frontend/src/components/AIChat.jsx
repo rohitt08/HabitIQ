@@ -26,28 +26,49 @@ export default function AIChat() {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [messages, open]);
 
+  const isMounted = useRef(true);
+  const abortRef = useRef(null);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
+
   const send = async (text) => {
     const q = (text ?? input).trim();
     if (!q || loading) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", content: q }]);
     setLoading(true);
+
+    abortRef.current = new AbortController();
+    const timeoutId = setTimeout(() => abortRef.current?.abort(), 15000);
+
     try {
-      const res = await api.post("/ai/chat", { question: q });
+      const res = await api.post("/ai/chat", { question: q }, { signal: abortRef.current.signal });
+      clearTimeout(timeoutId);
+      if (!isMounted.current) return;
       setMessages((m) => [
         ...m,
         { role: "assistant", content: res.data.content },
       ]);
-    } catch {
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (!isMounted.current) return;
+      const isTimeout = err.name === 'CanceledError' || err.code === 'ECONNABORTED' || err.message === 'canceled';
       setMessages((m) => [
         ...m,
         {
           role: "assistant",
-          content: "Sorry, I couldn't answer that right now.",
+          content: isTimeout ? "Request timed out. Please try again." : "Sorry, I couldn't answer that right now.",
         },
       ]);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
+      abortRef.current = null;
     }
   };
 

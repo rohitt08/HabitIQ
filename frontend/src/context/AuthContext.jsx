@@ -14,6 +14,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    sessionStorage.removeItem("ai-chat");
+    localStorage.removeItem("ai-chat");
     api
       .get("/auth/me")
       .then((res) => {
@@ -52,7 +54,10 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("ai-chat");
+    sessionStorage.removeItem("ai-chat");
     setUser(null);
+    window.location.href = "/login";
   };
 
   const updateUser = (u) => {
