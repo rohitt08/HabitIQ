@@ -199,7 +199,7 @@ body::before {
   }
 
   .input {
-    @apply w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition;
+    @apply w-full rounded-xl px-3.5 py-2.5 text-base outline-none transition;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text);
@@ -210,6 +210,11 @@ body::before {
   .input:focus {
     border-color: var(--input-border-focus);
     box-shadow: 0 0 0 4px var(--input-ring-focus);
+  }
+
+  select option {
+    background: var(--bg-base);
+    color: var(--text);
   }
 
   .label {

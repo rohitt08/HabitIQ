@@ -79,7 +79,7 @@ export default function OrbitingHabits() {
       {Object.entries(ORBITS).map(([k, o]) => (
         <div
           key={k}
-          className="absolute rounded-full border border-dashed border-[var(--surface-border)] dark:border-white/10"
+          className="absolute rounded-full border border-dashed border-[var(--surface-border)]"
           style={{ inset: o.inset }}
         />
       ))}
