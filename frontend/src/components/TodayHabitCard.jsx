@@ -53,12 +53,12 @@ export default function TodayHabitCard({
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="font-medium truncate">{habit.name}</div>
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className="font-medium break-words whitespace-normal leading-tight">{habit.name}</div>
           <span className="chip shrink-0">{habit.category}</span>
         </div>
         {habit.description && (
-          <div className="text-sm text-muted truncate mt-0.5">
+          <div className="text-sm text-muted mt-1 line-clamp-2 break-words">
             {habit.description}
           </div>
         )}
