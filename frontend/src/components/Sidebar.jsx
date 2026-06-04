@@ -11,7 +11,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import Modal from "./Modal.jsx";
@@ -32,6 +32,12 @@ export default function Sidebar() {
   const [morning, setMorning] = useState(user?.morningMotivation || false);
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const handle = () => setSettingsOpen(true);
+    window.addEventListener("open-settings", handle);
+    return () => window.removeEventListener("open-settings", handle);
+  }, []);
 
   const save = async () => {
     setSaving(true);

@@ -7,6 +7,7 @@ import {
   BarChart3,
   Sparkles,
   LogOut,
+  Settings,
   Sun,
   Moon,
 } from "lucide-react";
@@ -36,6 +37,13 @@ export default function MobileNav() {
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-semibold flex items-center justify-center">
             {user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"}
           </div>
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-settings"))}
+            className="p-2 rounded-lg text-soft hover:bg-[var(--surface-hover)]"
+            aria-label="Settings"
+          >
+            <Settings size={16} />
+          </button>
           <button
             onClick={logout}
             className="p-2 rounded-lg text-soft hover:bg-[var(--surface-hover)]"
