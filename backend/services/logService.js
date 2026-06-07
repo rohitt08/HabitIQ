@@ -19,16 +19,16 @@ class LogService {
     return await habitLogRepository.deleteLog(userId, habitId, completedDate);
   }
 
-  async getTodayLogs(userId) {
-    return await habitLogRepository.findByUserIdAndDate(userId, todayKey());
+  async getTodayLogs(userId, date) {
+    return await habitLogRepository.findByUserIdAndDate(userId, date || todayKey());
   }
 
   async getRangeLogs(userId, start, end) {
     return await habitLogRepository.findByUserIdAndDateRange(userId, start, end);
   }
 
-  async getHeatmap(userId) {
-    const days = last90Days();
+  async getHeatmap(userId, endDate) {
+    const days = last90Days(endDate);
 
     const aggregatedLogs = await habitLogRepository.aggregateLogs([
       {

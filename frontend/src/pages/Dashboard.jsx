@@ -48,9 +48,9 @@ export default function Dashboard() {
 
       const [habitsRes, todayRes, rangeRes, heatRes, allRange] = await Promise.all([
         api.get("/habits"),
-        api.get("/logs/today"),
+        api.get("/logs/today", { params: { date: todayKey() } }),
         api.get("/logs/range", { params: { start, end } }),
-        api.get("/logs/heatmap"),
+        api.get("/logs/heatmap", { params: { endDate: todayKey() } }),
         api.get("/logs/range", { params: { start: s90, end: e90 } }),
       ]);
 

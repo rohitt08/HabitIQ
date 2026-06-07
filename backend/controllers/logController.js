@@ -25,7 +25,8 @@ export const unmarkComplete = async (req, res, next) => {
 
 export const getToday = async (req, res, next) => {
   try {
-    const logs = await logService.getTodayLogs(req.user._id);
+    const { date } = req.query;
+    const logs = await logService.getTodayLogs(req.user._id, date);
     res.json(logs);
   } catch (err) {
     next(err);
@@ -44,7 +45,8 @@ export const getRange = async (req, res, next) => {
 
 export const getHeatmap = async (req, res, next) => {
   try {
-    const data = await logService.getHeatmap(req.user._id);
+    const { endDate } = req.query;
+    const data = await logService.getHeatmap(req.user._id, endDate);
     res.json(data);
   } catch (err) {
     next(err);
