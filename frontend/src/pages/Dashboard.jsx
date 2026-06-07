@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import api from "../api/axios.js";
 import Modal from "../components/Modal.jsx";
@@ -73,10 +73,19 @@ export default function Dashboard() {
     }
   };
 
+  const hasSuggested = useRef(false);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
   }, []);
+
+  useEffect(() => {
+    if (!loading && habits.length === 0 && !hasSuggested.current) {
+      setSuggestOpen(true);
+      hasSuggested.current = true;
+    }
+  }, [loading, habits.length]);
 
   const completedToday = useMemo(
     () => new Set(todayLogs.map((l) => String(l.habitId))),

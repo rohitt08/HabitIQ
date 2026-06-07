@@ -123,7 +123,9 @@ html.dark {
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100vh;
+  /* Use dvh if supported for better mobile experience */
+  min-height: 100dvh;
   margin: 0;
   color: var(--text);
   background: var(--bg-base);

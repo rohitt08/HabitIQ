@@ -148,7 +148,7 @@ export default function Sidebar() {
             </div>
           </label>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
             <button
               className="btn-secondary"
               onClick={() => setSettingsOpen(false)}

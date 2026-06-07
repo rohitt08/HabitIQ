@@ -64,7 +64,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
             <button className="btn-secondary" onClick={close}>
               Cancel
             </button>
@@ -94,7 +94,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="flex justify-between gap-2">
+          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-between gap-2">
             <button className="btn-ghost" onClick={() => setStep(0)}>
               Back
             </button>
@@ -122,7 +122,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="flex justify-between gap-2">
+          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-between gap-2">
             <button className="btn-ghost" onClick={() => setStep(1)}>
               Back
             </button>
@@ -185,7 +185,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               </div>
             </div>
           ))}
-          <div className="flex justify-end">
+          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end">
             <button className="btn-secondary" onClick={close}>
               Done
             </button>
