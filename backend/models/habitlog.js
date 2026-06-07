@@ -42,4 +42,6 @@ habitLogSchema.index(
   }
 );
 
+habitLogSchema.index({ userId: 1, completedDate: -1 });
+
 export default mongoose.model("HabitLog", habitLogSchema);

@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
@@ -44,6 +45,7 @@ const corsOptions = {
 
 app.set("trust proxy", 1); // Trust first proxy for correct IP identification behind reverse proxies
 app.use(helmet());
+app.use(compression());
 
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
