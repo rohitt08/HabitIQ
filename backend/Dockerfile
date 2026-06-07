@@ -4,7 +4,7 @@ WORKDIR /habitiq_be
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install
 
 COPY . .
 
