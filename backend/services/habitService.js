@@ -12,10 +12,19 @@ class HabitService {
     }
 
     const count = await habitRepository.countByUserId(userId);
+    
+    // Extract only allowed fields to prevent mass assignment of sensitive fields like userId
+    const { name, description, category, frequency, targetDays, color, icon } = habitData;
 
     const habit = await habitRepository.create({
       userId,
-      ...habitData,
+      name,
+      description,
+      category,
+      frequency,
+      targetDays,
+      color,
+      icon,
       order: count,
     });
 

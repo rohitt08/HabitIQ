@@ -42,6 +42,7 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+app.set("trust proxy", 1); // Trust first proxy for correct IP identification behind reverse proxies
 app.use(helmet());
 
 const globalLimiter = rateLimit({
