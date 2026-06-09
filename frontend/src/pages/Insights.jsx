@@ -21,11 +21,7 @@ import api from "../api/axios.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import Markdown from "../components/Markdown.jsx";
 import {
-  todayKey,
   weekKeysFor,
-  last7Days,
-  last90Days,
-  toKey,
   getISTDate
 } from "../utils/dateHelpers.js";
 import { useTheme } from "../context/ThemeContext.jsx";
