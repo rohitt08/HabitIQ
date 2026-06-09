@@ -1,13 +1,20 @@
 import authService from "../services/authService.js";
 
+const getCookieOptions = () => {
+  const isHttps = process.env.CLIENT_URL?.startsWith("https");
+  return {
+    httpOnly: true,
+    secure: !!isHttps,
+    sameSite: isHttps ? "none" : "lax",
+  };
+};
+
 export const register = async (req, res, next) => {
   try {
     const { user, token } = await authService.registerUser(req.body);
 
     res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production" && process.env.CLIENT_URL?.startsWith("https"),
-      sameSite: "lax",
+      ...getCookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -31,9 +38,7 @@ export const login = async (req, res, next) => {
     const { user, token } = await authService.loginUser(email, password);
 
     res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production" && process.env.CLIENT_URL?.startsWith("https"),
-      sameSite: "lax",
+      ...getCookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -69,9 +74,7 @@ export const updateProfile = async (req, res, next) => {
 export const logout = async (req, res, next) => {
   try {
     res.cookie("jwt", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production" && process.env.CLIENT_URL?.startsWith("https"),
-      sameSite: "lax",
+      ...getCookieOptions(),
       expires: new Date(0),
     });
     res.json({ message: "Logged out" });
