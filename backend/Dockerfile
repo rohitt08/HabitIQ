@@ -1,18 +1,13 @@
 FROM node:22-alpine
 
 WORKDIR /habitiq_be
-
-COPY package*.json ./
-
-RUN npm ci
-
-COPY . .
-
 ENV NODE_ENV=production
 
-EXPOSE 8000
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Run as non-root user for security
+COPY --chown=node:node . .
+
 USER node
-
-CMD ["npm", "start"]
+EXPOSE 8000
+CMD ["node", "server.js"]

@@ -8,6 +8,26 @@ class AuthService {
     });
   }
 
+  async generateUniqueUserTag() {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tag = "";
+    let isUnique = false;
+
+    while (!isUnique) {
+      tag = "#";
+      for (let i = 0; i < 6; i++) {
+        tag += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+
+      const existingUser = await userRepository.findByUserTag(tag);
+      if (!existingUser) {
+        isUnique = true;
+      }
+    }
+
+    return tag;
+  }
+
   async registerUser(userData) {
     const { name, email, password } = userData;
     const userExists = await userRepository.findByEmail(email.toLowerCase());
@@ -15,11 +35,14 @@ class AuthService {
       throw new Error("User already exists");
     }
 
+    const userTag = await this.generateUniqueUserTag();
+
     const user = await userRepository.create({
       name,
       email: email.toLowerCase(),
       password,
       avatar: name.charAt(0).toUpperCase(),
+      userTag,
     });
 
     const token = this.signToken(user._id);
@@ -52,6 +75,13 @@ class AuthService {
 
     await userRepository.save(user);
     return user;
+  }
+  async updateSettings(userId, settings) {
+    return await userRepository.updateSettings(userId, settings);
+  }
+
+  async savePushSubscription(userId, subscription) {
+    return await userRepository.updateSettings(userId, { pushSubscription: subscription });
   }
 }
 

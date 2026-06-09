@@ -1,8 +1,7 @@
-
 services:
   server:
     build: ./backend
-    image: habitiq-server:V1.0.0
+    image: habitiq-server:V2.0.0
     container_name: habit-server
     ports:
       - "8000:8000"
@@ -11,20 +10,32 @@ services:
     networks:
       - fullstack-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   client:
     build: ./frontend
-    image: habitiq-client:V1.0.0
+    image: habitiq-client:V2.0.0
     container_name: habit-client
     ports:
-      - "3000:3000"
+      - "3000:8080"
     env_file:
       - ./frontend/.env
     networks:
       - fullstack-net
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   fullstack-net:

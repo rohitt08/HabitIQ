@@ -11,7 +11,7 @@ export const register = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(201).json({ user, token });
+    res.status(201).json({ user });
   } catch (err) {
     if (err.message === "User already exists") {
       return res.status(400).json({ message: err.message });
@@ -37,7 +37,7 @@ export const login = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ user, token });
+    res.json({ user });
   } catch (err) {
     if (err.message === "Invalid email or password") {
       return res.status(401).json({ message: err.message });
@@ -78,4 +78,26 @@ export const logout = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const updateSettings = async (req, res, next) => {
+  try {
+    const user = await authService.updateSettings(req.user._id, req.body);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const savePushSubscription = async (req, res, next) => {
+  try {
+    const user = await authService.savePushSubscription(req.user._id, req.body);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getVapidPublicKey = (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "BL7jXBI0e9GRORf3BgPd4fbwElOr1am9bsuQyKB3JUUX0BDfjTjQR-2c2iOzMWzXHky6IuzM16faktGQqcNMxWg" });
 };
