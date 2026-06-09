@@ -3,6 +3,8 @@ export default function LoadingSpinner({ full = false, size = 24 }) {
     <div
       className="animate-spin rounded-full border-2 border-ink-200 border-t-brand-600"
       style={{ width: size, height: size }}
+      role="status"
+      aria-label="Loading"
     />
   );
   if (!full) return spinner;

@@ -77,7 +77,9 @@ class AIService {
 
     let suggestions = [];
     try {
-      const parsed = JSON.parse(content.replace(/```json|```/g, "").trim());
+      const match = content.match(/\{[\s\S]*\}/);
+      const jsonStr = match ? match[0] : content;
+      const parsed = JSON.parse(jsonStr);
       suggestions = parsed.suggestions || [];
     } catch {
       suggestions = [];
