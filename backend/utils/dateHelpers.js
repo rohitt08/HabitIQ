@@ -1,29 +1,56 @@
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { format, subDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 
-export const toDateKey = (date) => format(date, "yyyy-MM-dd");
+export const getISTDate = (dateStr) => {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+  return new Date(utc + (3600000 * 5.5));
+};
 
-export const todayKey = () => toDateKey(new Date());
+export const toDateKey = (date) => {
+  return date.toISOString().split("T")[0];
+};
+
+export const todayKey = () => toDateKey(getISTDate());
+
+export const isValidLogDate = (dateStr) => {
+  const today = todayKey();
+  const yesterday = toDateKey(subDays(getISTDate(), 1));
+  const tomorrow = toDateKey(addDays(getISTDate(), 1));
+  return [today, yesterday, tomorrow].includes(dateStr);
+};
 
 export const last90Days = (endDateStr) => {
-  const end = endDateStr ? new Date(endDateStr) : new Date();
-  const start = subDays(end, 89);
-
-  return eachDayOfInterval({ start, end }).map(toDateKey);
+  const end = endDateStr ? getISTDate(endDateStr) : getISTDate();
+  const keys = [];
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - i, 12, 0, 0));
+    keys.push(d.toISOString().split("T")[0]);
+  }
+  return keys;
 };
 
 export const currentWeekKeys = () => {
-  const now = new Date();
-
-  const start = startOfWeek(now, { weekStartsOn: 1 });
-  const end = endOfWeek(now, { weekStartsOn: 1 });
-
-  return eachDayOfInterval({ start, end }).map(toDateKey);
+  const now = getISTDate();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? 6 : day - 1;
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff, 12, 0, 0));
+  
+  const keys = [];
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(monday.getTime() + (i * 24 * 60 * 60 * 1000));
+    keys.push(dayDate.toISOString().split("T")[0]);
+  }
+  return keys;
 };
 
 export const lastNDays = (n) => {
-    const end = new Date();
-    const start = subDays(end, n - 1);
-    return eachDayOfInterval({ start, end }).map(toDateKey);
+    const end = getISTDate();
+    const keys = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - i, 12, 0, 0));
+      keys.push(d.toISOString().split("T")[0]);
+    }
+    return keys;
 };
 
 export const calcStreak = (sortedDateKeys) => {
@@ -36,11 +63,11 @@ export const calcStreak = (sortedDateKeys) => {
   const set = new Set(sortedDateKeys);
 
   const today = todayKey();
-  const yesterday = toDateKey(subDays(new Date(), 1));
+  const yesterday = toDateKey(subDays(getISTDate(), 1));
 
   let current = 0;
 
-  let cursor = new Date();
+  let cursor = getISTDate();
 
   if (!set.has(today) && !set.has(yesterday)) {
     current = 0;

@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { CATEGORIES, COLORS, ICONS } from "../utils/constants.js";
+import SelectDropdown from "./SelectDropdown.jsx";
 
 export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
+  const isCustomCategory = initial?.category && !CATEGORIES.includes(initial.category);
+
   const [form, setForm] = useState({
     name: initial?.name || "",
     description: initial?.description || "",
-    category: initial?.category || "Health",
+    category: isCustomCategory ? "Other" : (initial?.category || "Health"),
+    customCategory: isCustomCategory ? initial.category : "",
     frequency: initial?.frequency || "daily",
     targetDays: initial?.targetDays || 7,
     color: initial?.color || COLORS[0],
@@ -21,8 +25,19 @@ export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.name.trim()) return;
+    
+    // Determine the final category string
+    let finalCategory = form.category;
+    if (form.category === "Other") {
+       finalCategory = form.customCategory.trim() || "Other";
+    }
+
+    // Strip out the local 'customCategory' state when submitting
+    const { customCategory, ...submitData } = form;
+
     onSubmit({
-      ...form,
+      ...submitData,
+      category: finalCategory,
       targetDays: Number(form.targetDays),
     });
   };
@@ -52,29 +67,32 @@ export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">Category</label>
-          <select
-            className="input"
+      <div className="grid grid-cols-2 gap-3 relative z-30">
+        <div className="flex flex-col gap-2">
+          <label className="label mb-0">Category</label>
+          <SelectDropdown
             value={form.category}
             onChange={set("category")}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+            options={CATEGORIES}
+          />
+          {form.category === "Other" && (
+            <input
+              className="input animate-fade-in text-sm"
+              placeholder="Custom category name..."
+              value={form.customCategory}
+              onChange={set("customCategory")}
+              maxLength={20}
+              required
+            />
+          )}
         </div>
-        <div>
-          <label className="label">Frequency</label>
-          <select
-            className="input"
-            value={form.frequency}
-            onChange={set("frequency")}
-          >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-          </select>
+        <div className="flex flex-col gap-2">
+          <label className="label mb-0">Frequency</label>
+          <SelectDropdown
+            value={form.frequency === "daily" ? "Daily" : "Weekly"}
+            onChange={(val) => set("frequency")(val.toLowerCase())}
+            options={["Daily", "Weekly"]}
+          />
         </div>
       </div>
 
@@ -109,6 +127,21 @@ export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
               {i}
             </button>
           ))}
+          <div className="relative w-10 h-10 flex items-center justify-center">
+            <input 
+              type="text" 
+              maxLength={4} 
+              className={`w-full h-full text-center rounded-xl text-xl transition focus:outline-none focus:ring-2 focus:ring-brand-500 bg-transparent placeholder-soft ${
+                 (!ICONS.includes(form.icon) && form.icon !== "") ? "ring-2 ring-brand-500 bg-brand-500/15" : "glass hover:bg-[var(--surface-hover)]"
+              }`}
+              placeholder="+"
+              value={!ICONS.includes(form.icon) ? form.icon : ""}
+              onChange={(e) => set("icon")(e.target.value)}
+              onFocus={() => {
+                if (ICONS.includes(form.icon)) set("icon")("");
+              }}
+            />
+          </div>
         </div>
       </div>
 

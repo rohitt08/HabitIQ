@@ -1,5 +1,6 @@
 import habitRepository from "../repositories/habitRepository.js";
 import habitLogRepository from "../repositories/habitLogRepository.js";
+import { todayKey } from "../utils/dateHelpers.js";
 
 class HabitService {
   async getHabits(userId, includeArchived) {
@@ -9,6 +10,11 @@ class HabitService {
   async createHabit(userId, habitData) {
     if (!habitData.name) {
       throw new Error("Habit name is required");
+    }
+
+    const activeCount = await habitRepository.countActiveByUserId(userId);
+    if (activeCount >= 7) {
+      throw new Error("Maximum 7 active habits allowed");
     }
 
     const count = await habitRepository.countByUserId(userId);
@@ -56,16 +62,29 @@ class HabitService {
   }
 
   async deleteHabit(id, userId) {
-    const habit = await habitRepository.deleteByIdAndUserId(id, userId);
+    const habit = await habitRepository.findByIdAndUserId(id, userId);
     if (!habit) throw new Error("Habit not found");
 
-    await habitLogRepository.deleteByHabitIdAndUserId(habit._id, userId);
+    const todayLog = await habitLogRepository.findByUserIdHabitIdAndDate(userId, id, todayKey());
+    if (todayLog) {
+      throw new Error("Cannot delete a habit after completing it today. Please wait until tomorrow.");
+    }
+
+    await habitRepository.deleteByIdAndUserId(id, userId);
+    await habitLogRepository.deleteByHabitIdAndUserId(id, userId);
     return true;
   }
 
   async archiveHabit(id, userId) {
     const habit = await habitRepository.findByIdAndUserId(id, userId);
     if (!habit) throw new Error("Habit not found");
+
+    if (!habit.isArchived) {
+      const todayLog = await habitLogRepository.findByUserIdHabitIdAndDate(userId, id, todayKey());
+      if (todayLog) {
+        throw new Error("Cannot archive a habit after completing it today. Please wait until tomorrow.");
+      }
+    }
 
     habit.isArchived = !habit.isArchived;
     return await habitRepository.save(habit);

@@ -19,6 +19,10 @@ class HabitLogRepository {
     return await HabitLog.deleteMany({ habitId, userId });
   }
 
+  async findByUserIdHabitIdAndDate(userId, habitId, completedDate) {
+    return await HabitLog.findOne({ userId, habitId, completedDate });
+  }
+
   async findByUserIdAndDate(userId, completedDate) {
     return await HabitLog.find({ userId, completedDate });
   }

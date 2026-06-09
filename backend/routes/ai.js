@@ -10,9 +10,10 @@ import { protect } from "../middleware/auth.js";
 import rateLimit from "express-rate-limit";
 
 const aiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 15, // limit each IP to 15 requests per windowMs
-    message: "Too many AI requests from this IP, please try again after 15 minutes",
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    limit: 15, // limit each user to 15 requests per day
+    keyGenerator: (req) => req.user._id.toString(), // user ID based
+    message: "Greetings! You have exhausted your AI responses for today. Please come back tomorrow for more!",
     standardHeaders: 'draft-7',
     legacyHeaders: false,
 });

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios.js";
-import { Trophy, Award, Medal, Crown, Star } from "lucide-react";
+import { Trophy, Award, Medal, Crown, Star, Info } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import Modal from "./Modal.jsx";
 
 const rankStyles = {
   1: "bg-gradient-to-br from-yellow-300 to-yellow-600 border-yellow-400/50 shadow-yellow-500/20 text-yellow-900",
@@ -15,6 +16,7 @@ export default function Leaderboard() {
   const { user: authUser } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -73,10 +75,12 @@ export default function Leaderboard() {
         </div>
 
         <div className="flex items-center gap-3 ml-4 flex-1 min-w-0">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-inner ${
-            isTop3 ? "bg-white/20 text-current" : "bg-gradient-to-br from-brand-500 to-brand-700 text-white"
-          }`}>
-            {user.avatar}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-500/20 overflow-hidden shrink-0">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              user.avatar
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -115,9 +119,18 @@ export default function Leaderboard() {
         <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
           <Award size={150} />
         </div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Star className="text-brand-500" size={20} />
-          Your Ranking
+        <h2 className="text-lg font-semibold mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Star className="text-brand-500" size={20} />
+            Your Ranking
+          </div>
+          <button 
+            onClick={() => setInfoOpen(true)}
+            className="text-muted hover:text-brand-500 transition-colors"
+            title="How XP works"
+          >
+            <Info size={18} />
+          </button>
         </h2>
         
         <div className="mb-4">
@@ -173,7 +186,7 @@ export default function Leaderboard() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
           {topUsers.map(u => renderRow(u, u._id === authUser?._id))}
           
           {topUsers.length === 0 && (
@@ -196,6 +209,42 @@ export default function Leaderboard() {
           </>
         )}
       </div>
+
+      {/* XP Info Modal */}
+      <Modal open={infoOpen} onClose={() => setInfoOpen(false)} title="How XP Works" maxWidth="max-w-md">
+        <div className="space-y-4 text-sm">
+          <p className="text-soft">
+            Earn Experience Points (XP) to climb the leaderboard and unlock new badges!
+          </p>
+          <div className="glass rounded-xl p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Complete a habit</span>
+              <span className="font-bold text-brand-500">+2 XP</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted pb-2 border-b divider">
+              <span>Daily Limit</span>
+              <span>Max 14 XP per day</span>
+            </div>
+            
+            <div className="flex justify-between items-center pt-1">
+              <span className="font-medium text-orange-500 flex items-center gap-1">🔥 7-Day Streak</span>
+              <span className="font-bold text-orange-500">+30 XP</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-red-500 flex items-center gap-1">🔥🔥 30-Day Streak</span>
+              <span className="font-bold text-red-500">+150 XP</span>
+            </div>
+            
+            <div className="flex justify-between items-center pt-2 border-t divider">
+              <span className="font-medium flex items-center gap-1"><Award size={14}/> Unlock Badges</span>
+              <span className="font-bold text-brand-500">+100 XP each</span>
+            </div>
+          </div>
+          <div className="text-xs text-muted text-center italic mt-4">
+            Note: Uncompleting a habit will remove the earned XP.
+          </div>
+        </div>
+      </Modal>
 
     </div>
   );

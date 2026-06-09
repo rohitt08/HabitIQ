@@ -9,6 +9,9 @@ export const markComplete = async (req, res, next) => {
     if (err.message === "Habit not found") {
       return res.status(404).json({ message: err.message });
     }
+    if (err.message === "Invalid date for logging") {
+      return res.status(400).json({ message: err.message });
+    }
     next(err);
   }
 };
@@ -19,6 +22,9 @@ export const unmarkComplete = async (req, res, next) => {
     await logService.unmarkComplete(req.user._id, habitId, date);
     res.json({ message: "Unmarked" });
   } catch (err) {
+    if (err.message === "Invalid date for logging") {
+      return res.status(400).json({ message: err.message });
+    }
     next(err);
   }
 };

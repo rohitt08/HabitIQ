@@ -20,12 +20,12 @@ export default function MobileNav() {
   return (
     <>
       <div className="md:hidden sticky top-0 z-20 bg-[var(--bg-base)] dark:bg-black/90 glass border-b divider px-4 py-3 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center gap-2">
+        <NavLink to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shadow-md shadow-brand-500/30">
             <Sparkles size={16} />
           </div>
           <div className="font-semibold">HabitIQ</div>
-        </div>
+        </NavLink>
         <div className="flex items-center gap-2">
           <button
             onClick={toggle}
@@ -34,9 +34,15 @@ export default function MobileNav() {
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-semibold flex items-center justify-center">
-            {user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"}
-          </div>
+          <button onClick={() => window.dispatchEvent(new Event("open-settings"))}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-sm font-semibold flex items-center justify-center shadow-md shadow-brand-500/30 overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"
+              )}
+            </div>
+          </button>
           <button
             onClick={() => window.dispatchEvent(new Event("open-settings"))}
             className="p-2 rounded-lg text-soft hover:bg-[var(--surface-hover)]"
@@ -52,13 +58,12 @@ export default function MobileNav() {
           </button>
         </div>
       </div>
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--bg-base)] dark:bg-black/90 glass border-t divider flex justify-around py-2 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--bg-base)] dark:bg-black/90 glass border-t divider flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
         {[
           { to: "/dashboard", label: "Home", icon: LayoutDashboard },
           { to: "/habits", label: "Habits", icon: ListChecks },
           { to: "/weekly", label: "Weekly", icon: CalendarDays },
           { to: "/insights", label: "Insights", icon: Brain },
-          { to: "/stats", label: "Stats", icon: BarChart3 },
         ].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

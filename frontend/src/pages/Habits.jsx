@@ -9,6 +9,7 @@ import {
   Trophy,
   ArchiveRestore,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import api from "../api/axios.js";
 import Modal from "../components/Modal.jsx";
@@ -18,6 +19,7 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { CATEGORIES } from "../utils/constants.js";
 import { streakFromKeys } from "../utils/dateHelpers.js";
 import { format, subDays } from "date-fns";
+import { getISTDate } from "../utils/dateHelpers.js";
 
 export default function Habits() {
   const [habits, setHabits] = useState([]);
@@ -33,6 +35,9 @@ export default function Habits() {
   const [submitting, setSubmitting] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [maxHabitsError, setMaxHabitsError] = useState(false);
+  const [restrictedActionMessage, setRestrictedActionMessage] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -41,8 +46,8 @@ export default function Habits() {
         api.get("/habits", { params: { includeArchived: "true" } }),
         api.get("/logs/range", {
           params: {
-            start: format(subDays(new Date(), 89), "yyyy-MM-dd"),
-            end: format(new Date(), "yyyy-MM-dd"),
+            start: format(subDays(getISTDate(), 89), "yyyy-MM-dd"),
+            end: format(getISTDate(), "yyyy-MM-dd"),
           },
         }),
       ]);
@@ -92,33 +97,60 @@ export default function Habits() {
       }
       setFormOpen(false);
       setEditing(null);
+    } catch (err) {
+      if (err.response?.data?.message === "Maximum 7 active habits allowed") {
+        setMaxHabitsError(true);
+      } else if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const archive = async (habit) => {
-    const res = await api.put(`/habits/${habit._id}/archive`);
-    setHabits((hs) => hs.map((h) => (h._id === res.data._id ? res.data : h)));
+    try {
+      const res = await api.put(`/habits/${habit._id}/archive`);
+      setHabits((hs) => hs.map((h) => (h._id === res.data._id ? res.data : h)));
+    } catch (err) {
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      }
+    }
   };
 
   const remove = async (habit) => {
-    await api.delete(`/habits/${habit._id}`);
-    setHabits((hs) => hs.filter((h) => h._id !== habit._id));
-    setDeleteTarget(null);
+    try {
+      await api.delete(`/habits/${habit._id}`);
+      setHabits((hs) => hs.filter((h) => h._id !== habit._id));
+      setDeleteTarget(null);
+    } catch (err) {
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      }
+      setDeleteTarget(null);
+    }
   };
 
   const acceptSuggestion = async (s) => {
-    const res = await api.post("/habits", {
-      name: s.name,
-      description: s.description,
-      category: s.category,
-      frequency: s.frequency,
-      icon: s.icon,
-      targetDays: s.frequency === "daily" ? 7 : 3,
-    });
-    setHabits((hs) => [...hs, res.data]);
-    setLogsByHabit((p) => ({ ...p, [res.data._id]: [] }));
+    try {
+      const res = await api.post("/habits", {
+        name: s.name,
+        description: s.description,
+        category: s.category,
+        frequency: s.frequency,
+        icon: s.icon,
+        targetDays: s.frequency === "daily" ? 7 : 3,
+      });
+      setHabits((hs) => [...hs, res.data]);
+      setLogsByHabit((p) => ({ ...p, [res.data._id]: [] }));
+    } catch (err) {
+      if (err.response?.data?.message === "Maximum 7 active habits allowed") {
+        setMaxHabitsError(true);
+      } else if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      }
+    }
   };
 
   if (loading) return <LoadingSpinner full />;
@@ -155,12 +187,12 @@ export default function Habits() {
         </div>
       </div>
 
-      <div className="card p-4">
+      <div className="card p-4 relative z-20">
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
           <div className="relative flex-1">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-soft pointer-events-none"
             />
             <input
               className="input pl-9"
@@ -169,16 +201,53 @@ export default function Habits() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <select
-            className="input md:w-52"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="All">All categories</option>
-            {CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+          
+          <div className="relative md:w-52 z-30">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="input flex justify-between items-center w-full text-left"
+            >
+              <span className={category === "All" ? "text-soft" : ""}>{category === "All" ? "All categories" : category}</span>
+              <ChevronDown size={16} className={`text-faint transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+            
+            {dropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-0" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute top-full mt-2 w-full glass-strong rounded-xl shadow-xl z-10 overflow-hidden py-1 animate-fade-in border border-[var(--surface-border)]">
+                  <button
+                    onClick={() => {
+                      setCategory("All");
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)] ${
+                      category === "All" 
+                        ? "bg-brand-500/10 text-brand-700 dark:text-brand-300 font-medium" 
+                        : "text-soft"
+                    }`}
+                  >
+                    All categories
+                  </button>
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => {
+                        setCategory(c);
+                        setDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)] ${
+                        category === c 
+                          ? "bg-brand-500/10 text-brand-700 dark:text-brand-300 font-medium" 
+                          : "text-soft"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <div className="inline-flex rounded-xl glass overflow-hidden text-sm">
             <button
               onClick={() => setShowArchived(false)}
@@ -236,6 +305,16 @@ export default function Habits() {
           {filtered.map((h) => {
             const keys = logsByHabit[h._id] || [];
             const { current, longest } = streakFromKeys(keys);
+            const isCompletedToday = keys.includes(format(getISTDate(), "yyyy-MM-dd"));
+
+            const handleRestrictedAction = (action) => {
+              if (isCompletedToday) {
+                setRestrictedActionMessage("Oops, cannot modify now! You can modify or update your habit tomorrow.");
+                return;
+              }
+              action();
+            };
+
             return (
               <div
                 key={h._id}
@@ -294,17 +373,17 @@ export default function Habits() {
                 <div className="flex items-center gap-1">
                   <button
                     className="btn-ghost p-2"
-                    onClick={() => {
+                    onClick={() => handleRestrictedAction(() => {
                       setEditing(h);
                       setFormOpen(true);
-                    }}
+                    })}
                     title="Edit"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     className="btn-ghost p-2"
-                    onClick={() => archive(h)}
+                    onClick={() => handleRestrictedAction(() => archive(h))}
                     title={h.isArchived ? "Unarchive" : "Archive"}
                   >
                     {h.isArchived ? (
@@ -315,7 +394,7 @@ export default function Habits() {
                   </button>
                   <button
                     className="btn-ghost p-2 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400"
-                    onClick={() => setDeleteTarget(h)}
+                    onClick={() => handleRestrictedAction(() => setDeleteTarget(h))}
                     title="Delete"
                   >
                     <Trash2 size={16} />
@@ -377,6 +456,55 @@ export default function Habits() {
         onClose={() => setSuggestOpen(false)}
         onAccept={acceptSuggestion}
       />
+
+      <Modal
+        open={maxHabitsError}
+        onClose={() => setMaxHabitsError(false)}
+        title="Habit Limit Reached"
+        maxWidth="max-w-sm"
+      >
+        <div className="text-center pb-2">
+          <div className="text-4xl mb-4">🧘</div>
+          <h3 className="font-semibold text-lg mb-2">Keep your focus sharp</h3>
+          <p className="text-sm text-soft">
+            You've reached the maximum of <strong>7 active habits</strong>. Science shows that focusing on fewer habits leads to better consistency.
+          </p>
+          <p className="text-sm text-soft mt-3">
+            To add a new habit, please delete or archive an uncompleted one first.
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="btn-primary w-full justify-center"
+            onClick={() => setMaxHabitsError(false)}
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!restrictedActionMessage}
+        onClose={() => setRestrictedActionMessage("")}
+        title="Action Not Allowed"
+        maxWidth="max-w-sm"
+      >
+        <div className="text-center pb-2">
+          <div className="text-4xl mb-4">🛑</div>
+          <h3 className="font-semibold text-lg mb-2">Wait a minute!</h3>
+          <p className="text-sm text-soft">
+            {restrictedActionMessage}
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="btn-primary w-full justify-center"
+            onClick={() => setRestrictedActionMessage("")}
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

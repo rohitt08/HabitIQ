@@ -45,7 +45,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
-      <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <header className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-500/30">
             <Sparkles size={18} />
@@ -69,7 +69,7 @@ export default function Landing() {
         </nav>
       </header>
 
-      <section className="max-w-6xl mx-auto px-6 pt-10 md:pt-16 pb-16">
+      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-10 md:pt-16 pb-16">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-6 items-center">
           <div className="lg:col-span-8 text-center lg:text-left order-2 lg:order-1">
             <div className="inline-flex items-center gap-1.5 chip mb-5 bg-brand-500/15 text-brand-700 dark:text-brand-300">
@@ -178,7 +178,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16 border-t divider">
+      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-16 border-t divider">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
             Everything you need, nothing you don't
@@ -203,7 +203,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-16">
         <div className="relative p-10 text-center rounded-2xl overflow-hidden bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-2xl shadow-brand-500/30">
           <div
             className="absolute inset-0 pointer-events-none opacity-50"
@@ -236,7 +236,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="max-w-6xl mx-auto px-6 py-8 text-center text-xs text-faint border-t divider">
+      <footer className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-8 text-center text-xs text-faint border-t divider">
         Built with MERN · HabitIQ © {new Date().getFullYear()}
       </footer>
     </div>

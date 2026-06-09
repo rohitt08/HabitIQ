@@ -4,16 +4,19 @@ import { format, addWeeks, isSameWeek } from "date-fns";
 import api from "../api/axios.js";
 import WeeklyGrid from "../components/WeeklyGrid.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import DatePicker from "../components/DatePicker.jsx";
+import { getISTDate } from "../utils/dateHelpers.js";
 import { weekKeysFor } from "../utils/dateHelpers.js";
 
 export default function Weekly() {
-  const [cursor, setCursor] = useState(new Date());
+  const [cursor, setCursor] = useState(getISTDate());
   const [habits, setHabits] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const days = useMemo(() => weekKeysFor(cursor), [cursor]);
-  const isCurrentWeek = isSameWeek(cursor, new Date(), { weekStartsOn: 1 });
+  const isCurrentWeek = isSameWeek(cursor, getISTDate(), { weekStartsOn: 1 });
 
   useEffect(() => {
     (async () => {
@@ -79,9 +82,28 @@ export default function Weekly() {
           >
             <ChevronLeft size={16} />
           </button>
-          <div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl glass text-sm font-medium">
-            <CalendarDays size={14} className="text-muted" />
-            {format(days[0].date, "MMM d")} — {format(days[6].date, "MMM d, yyyy")}
+          <div className="relative z-20">
+            <button
+              onClick={() => setCalendarOpen(!calendarOpen)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl glass hover:bg-[var(--surface-hover)] transition text-sm font-medium"
+            >
+              <CalendarDays size={14} className="text-muted" />
+              {format(days[0].date, "MMM d")} — {format(days[6].date, "MMM d, yyyy")}
+            </button>
+            {calendarOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setCalendarOpen(false)} />
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 glass-strong rounded-xl shadow-xl z-20 border border-[var(--surface-border)] animate-fade-in">
+                  <DatePicker 
+                    selectedDate={cursor} 
+                    onSelect={(d) => {
+                      setCursor(d);
+                      setCalendarOpen(false);
+                    }} 
+                  />
+                </div>
+              </>
+            )}
           </div>
           <button
             className="btn-secondary px-3"
@@ -94,7 +116,7 @@ export default function Weekly() {
           {!isCurrentWeek && (
             <button
               className="btn-ghost"
-              onClick={() => setCursor(new Date())}
+              onClick={() => setCursor(getISTDate())}
             >
               Today
             </button>

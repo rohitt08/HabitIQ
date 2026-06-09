@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    avatarUrl: {
+      type: String,
+      default: null,
+    },
+
     morningMotivation: {
       type: Boolean,
       default: false,
@@ -37,6 +42,21 @@ const userSchema = new mongoose.Schema(
     level: {
       type: Number,
       default: 1,
+    },
+
+    badges: {
+      type: [String],
+      default: [],
+    },
+
+    dailyXp: {
+      type: Number,
+      default: 0,
+    },
+
+    dailyXpDate: {
+      type: String,
+      default: "",
     },
 
     pushSubscription: {

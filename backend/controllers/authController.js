@@ -9,6 +9,32 @@ const getCookieOptions = () => {
   };
 };
 
+export const sendOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.sendOtp(email);
+    res.json({ message: "Verification code sent to email" });
+  } catch (err) {
+    if (err.message === "User already exists" || err.message === "Valid email is required") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
+export const verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    await authService.verifyOtp(email, otp);
+    res.json({ message: "Code verified successfully" });
+  } catch (err) {
+    if (err.message === "Invalid or expired verification code" || err.message === "Email and OTP are required") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
 export const register = async (req, res, next) => {
   try {
     const { user, token } = await authService.registerUser(req.body);
@@ -20,7 +46,14 @@ export const register = async (req, res, next) => {
 
     res.status(201).json({ user, token });
   } catch (err) {
-    if (err.message === "User already exists") {
+    if (
+      err.message === "User already exists" ||
+      err.message === "Valid name is required" ||
+      err.message === "Valid email is required" ||
+      err.message === "Verification code is required" ||
+      err.message === "Invalid or expired verification code" ||
+      err.message === "Valid password (at least 8 characters) is required"
+    ) {
       return res.status(400).json({ message: err.message });
     }
     next(err);
@@ -61,7 +94,17 @@ export const me = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const user = await authService.updateProfile(req.user._id, req.body);
+    const updateData = { ...req.body };
+    if (req.file && req.file.path) {
+      updateData.avatarUrl = req.file.path;
+    }
+    
+    // Parse morningMotivation if it was sent as a string (from FormData)
+    if (typeof updateData.morningMotivation === "string") {
+      updateData.morningMotivation = updateData.morningMotivation === "true";
+    }
+
+    const user = await authService.updateProfile(req.user._id, updateData);
     res.json({ user });
   } catch (err) {
     if (err.message === "User not found") {
@@ -101,6 +144,28 @@ export const savePushSubscription = async (req, res, next) => {
   }
 };
 
+export const removePushSubscription = async (req, res, next) => {
+  try {
+    const user = await authService.removePushSubscription(req.user._id);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getVapidPublicKey = (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "BL7jXBI0e9GRORf3BgPd4fbwElOr1am9bsuQyKB3JUUX0BDfjTjQR-2c2iOzMWzXHky6IuzM16faktGQqcNMxWg" });
+};
+
+export const deleteAccount = async (req, res, next) => {
+  try {
+    await authService.deleteAccount(req.user._id);
+    res.cookie("jwt", "", {
+      ...getCookieOptions(),
+      expires: new Date(0),
+    });
+    res.json({ message: "Account deleted" });
+  } catch (err) {
+    next(err);
+  }
 };

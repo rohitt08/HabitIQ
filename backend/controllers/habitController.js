@@ -14,7 +14,7 @@ export const createHabit = async (req, res, next) => {
     const habit = await habitService.createHabit(req.user._id, req.body);
     res.status(201).json(habit);
   } catch (err) {
-    if (err.message === "Habit name is required") {
+    if (err.message === "Habit name is required" || err.message === "Maximum 7 active habits allowed") {
       return res.status(400).json({ message: err.message });
     }
     next(err);

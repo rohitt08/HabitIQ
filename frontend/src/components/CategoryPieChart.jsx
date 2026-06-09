@@ -53,10 +53,10 @@ export default function CategoryPieChart({ data }) {
                     theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(15,15,27,0.08)"
                   }`,
                   borderRadius: 12,
-                  fontSize: 12,
-                  color: theme === "dark" ? "#ebebf5" : "#13131b",
                   backdropFilter: "blur(12px)",
                 }}
+                itemStyle={{ color: theme === "dark" ? "#ebebf5" : "#13131b", fontSize: 12 }}
+                labelStyle={{ color: theme === "dark" ? "#ebebf5" : "#13131b", fontSize: 12, fontWeight: "bold", marginBottom: 4 }}
               />
               <Legend
                 wrapperStyle={{

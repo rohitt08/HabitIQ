@@ -17,6 +17,10 @@ class HabitRepository {
     return await Habit.countDocuments({ userId });
   }
 
+  async countActiveByUserId(userId) {
+    return await Habit.countDocuments({ userId, isArchived: false });
+  }
+
   async create(data) {
     return await Habit.create(data);
   }

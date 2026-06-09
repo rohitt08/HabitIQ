@@ -1,6 +1,8 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { 
+    sendOtp,
+    verifyOtp,
     register,
     login,
     logout,
@@ -8,10 +10,13 @@ import {
     updateProfile,
     updateSettings,
     savePushSubscription,
-    getVapidPublicKey
+    removePushSubscription,
+    getVapidPublicKey,
+    deleteAccount
  } from "../controllers/authController.js"
 
 import { protect } from "../middleware/auth.js";
+import { upload } from "../utils/cloudinary.js";
 
 
 const loginLimiter = rateLimit({
@@ -22,15 +27,27 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  limit: 5, // start blocking after 5 requests
+  message: { message: "Too many accounts created from this IP, please try again after an hour" },
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
 const router = express.Router();
 
-router.post("/register", register);
+router.post("/send-otp", registerLimiter, sendOtp);
+router.post("/verify-otp", registerLimiter, verifyOtp);
+router.post("/register", registerLimiter, register);
 router.post("/login", loginLimiter, login);
 router.post("/logout", logout);
 router.get("/me", protect, me);
-router.put("/profile", protect, updateProfile);
+router.put("/profile", protect, upload.single("avatar"), updateProfile);
 router.put("/settings", protect, updateSettings);
 router.post("/push-subscription", protect, savePushSubscription);
+router.delete("/push-subscription", protect, removePushSubscription);
 router.get("/vapid-public-key", getVapidPublicKey);
+router.delete("/me", protect, deleteAccount);
 
 export default router;

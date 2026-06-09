@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Send, X, Sparkles, RefreshCw } from "lucide-react";
 import api from "../api/axios.js";
 import Markdown from "./Markdown.jsx";
+import Modal from "./Modal.jsx";
 
 const SAMPLES = [
   "Which day of the week am I most consistent?",
@@ -20,6 +21,7 @@ export default function AIChat() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rateLimitOpen, setRateLimitOpen] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -58,14 +60,18 @@ export default function AIChat() {
     } catch (err) {
       clearTimeout(timeoutId);
       if (!isMounted.current) return;
-      const isTimeout = err.name === 'CanceledError' || err.code === 'ECONNABORTED' || err.message === 'canceled';
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          content: isTimeout ? "Request timed out. Please try again." : "Sorry, I couldn't answer that right now.",
-        },
-      ]);
+      if (err.response?.status === 429) {
+        setRateLimitOpen(true);
+        setMessages((m) => m.slice(0, -1)); // Remove the user's question since it wasn't answered
+      } else {
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            content: isTimeout ? "Request timed out. Please try again." : "Sorry, I couldn't answer that right now.",
+          },
+        ]);
+      }
     } finally {
       if (isMounted.current) setLoading(false);
       abortRef.current = null;
@@ -76,14 +82,14 @@ export default function AIChat() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-2xl shadow-brand-500/40 flex items-center justify-center hover:scale-105 active:scale-95 transition"
+        className="fixed bottom-20 md:bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-2xl shadow-brand-500/40 flex items-center justify-center hover:scale-105 active:scale-95 transition"
         aria-label="AI Chat"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} />}
       </button>
 
       {open && (
-        <div className="fixed bottom-36 md:bottom-24 right-6 z-40 w-[min(92vw,380px)] h-[min(70vh,520px)] glass-strong rounded-2xl flex flex-col animate-slide-up shadow-2xl overflow-hidden">
+        <div className="fixed bottom-36 md:bottom-24 right-6 z-50 w-[min(92vw,380px)] h-[min(70vh,520px)] glass-strong rounded-2xl flex flex-col animate-slide-up shadow-2xl overflow-hidden">
           <div className="px-4 py-3 border-b divider flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shadow-md shadow-brand-500/30">
               <Sparkles size={14} />
@@ -162,6 +168,19 @@ export default function AIChat() {
           </form>
         </div>
       )}
+
+      <Modal open={rateLimitOpen} onClose={() => setRateLimitOpen(false)} title="Daily Limit Reached">
+        <div className="py-4 text-center">
+          <div className="text-4xl mb-4">🤖</div>
+          <p className="text-lg font-medium mb-2">Greetings!</p>
+          <p className="text-soft">
+            You have exhausted your AI responses for today. Please come back tomorrow for more!
+          </p>
+          <button onClick={() => setRateLimitOpen(false)} className="btn-primary w-full mt-6">
+            Got it
+          </button>
+        </div>
+      </Modal>
     </>
   );
 }

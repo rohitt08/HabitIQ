@@ -22,20 +22,30 @@ const nav = [
   { to: "/habits", label: "Habits", icon: ListChecks },
   { to: "/weekly", label: "Weekly", icon: CalendarDays },
   { to: "/insights", label: "Insights", icon: Brain },
-  { to: "/stats", label: "Statistics", icon: BarChart3 },
 ];
 
 export default function Sidebar() {
   const { user, logout, updateUser } = useAuth();
   const { theme, toggle } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [morning, setMorning] = useState(user?.morningMotivation || false);
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
   const [reminderTime, setReminderTime] = useState(user?.reminderTime || "08:00");
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    user?.pushSubscription && Notification.permission === "granted"
+    () => typeof Notification !== "undefined" && !!user?.pushSubscription && Notification.permission === "granted"
   );
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl || null);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
 
   useEffect(() => {
     const handle = () => setSettingsOpen(true);
@@ -85,6 +95,7 @@ export default function Sidebar() {
 
       await api.post("/auth/push-subscription", subscription);
       setNotificationsEnabled(true);
+      updateUser({ ...user, pushSubscription: subscription });
     } catch (err) {
       console.error("Failed to subscribe to push notifications", err);
       alert("Error enabling notifications");
@@ -93,12 +104,37 @@ export default function Sidebar() {
     }
   };
 
+  const unsubscribeFromPush = async () => {
+    try {
+      setSaving(true);
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
+      await api.delete("/auth/push-subscription");
+      setNotificationsEnabled(false);
+      updateUser({ ...user, pushSubscription: null });
+    } catch (err) {
+      console.error("Failed to unsubscribe", err);
+      alert("Error disabling notifications");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     try {
-      const res = await api.put("/auth/profile", {
-        name,
-        morningMotivation: morning,
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("morningMotivation", morning);
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
+
+      const res = await api.put("/auth/profile", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
       await api.put("/auth/settings", { reminderTime });
       
@@ -110,15 +146,27 @@ export default function Sidebar() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setSaving(true);
+      await api.delete("/auth/me");
+      logout();
+    } catch (err) {
+      console.error("Failed to delete account", err);
+      alert("Failed to delete account. Please try again.");
+      setSaving(false);
+    }
+  };
+
   return (
     <aside className="hidden md:flex md:flex-col w-64 fixed inset-y-0 left-0 z-30 glass border-r">
       <div className="px-6 py-5 border-b divider">
-        <div className="flex items-center gap-2">
+        <NavLink to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-500/30">
             <Sparkles size={18} />
           </div>
           <div className="font-semibold text-lg tracking-tight">HabitIQ</div>
-        </div>
+        </NavLink>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -157,8 +205,12 @@ export default function Sidebar() {
         </button>
 
         <div className="px-2 py-2 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold flex items-center justify-center shadow-md shadow-brand-500/30">
-            {user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold flex items-center justify-center shadow-md shadow-brand-500/30 overflow-hidden shrink-0">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium truncate">{user?.name}</div>
@@ -185,13 +237,28 @@ export default function Sidebar() {
         title="Settings"
       >
         <div className="space-y-4">
-          <div>
-            <label className="label">Display name</label>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold flex items-center justify-center text-2xl shadow-md overflow-hidden shrink-0">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  user?.avatar || user?.name?.charAt(0).toUpperCase() || "U"
+                )}
+              </div>
+              <label className="absolute bottom-0 right-0 w-6 h-6 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center cursor-pointer border border-gray-100 dark:border-gray-700" title="Upload Picture">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 dark:text-gray-300"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              </label>
+            </div>
+            <div className="flex-1">
+              <label className="label">Profile name</label>
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="pt-2 border-t divider" />
@@ -221,8 +288,8 @@ export default function Sidebar() {
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                   notificationsEnabled ? "bg-brand-500" : "bg-gray-300 dark:bg-gray-700"
                 }`}
-                onClick={notificationsEnabled ? () => {} : subscribeToPush}
-                disabled={saving || notificationsEnabled}
+                onClick={notificationsEnabled ? unsubscribeFromPush : subscribeToPush}
+                disabled={saving}
               >
                 <span
                   className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
@@ -244,6 +311,21 @@ export default function Sidebar() {
             />
           </div>
 
+          <div className="pt-2 border-t divider" />
+          
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="text-sm font-medium text-rose-500">Danger Zone</div>
+            <button
+              onClick={() => {
+                setSettingsOpen(false);
+                setDeleteOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
+            >
+              Delete Account
+            </button>
+          </div>
+
           <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
             <button
               className="btn-secondary"
@@ -255,6 +337,33 @@ export default function Sidebar() {
               {saving ? "Saving..." : "Save"}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Delete Account?"
+        maxWidth="max-w-sm"
+      >
+        <p className="text-sm text-soft">
+          This will permanently delete your account, all habits, logs, and insights. This action <b>cannot</b> be undone.
+        </p>
+        <div className="flex justify-end gap-2 mt-5">
+          <button
+            className="btn-secondary"
+            onClick={() => setDeleteOpen(false)}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 shadow-lg shadow-rose-500/30 transition"
+            onClick={handleDeleteAccount}
+            disabled={saving}
+          >
+            {saving ? "Deleting..." : "Delete Permanently"}
+          </button>
         </div>
       </Modal>
     </aside>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 
 const levelColor = (count, max) => {
   if (!count) return "var(--heat-0)";
@@ -10,19 +10,32 @@ const levelColor = (count, max) => {
   return "var(--heat-4)";
 };
 
+import { getISTDate } from "../utils/dateHelpers.js";
+
 export default function HeatmapChart({ data = [] }) {
   const { cols, max } = useMemo(() => {
-    if (!data.length) return { cols: [], max: 0 };
-    const max = Math.max(...data.map((d) => d.count));
+    const end = getISTDate();
+    const skeleton = [];
+    for (let i = 89; i >= 0; i--) {
+      skeleton.push(format(subDays(end, i), "yyyy-MM-dd"));
+    }
+
+    const countMap = {};
+    let max = 0;
+    data.forEach(d => {
+      countMap[d.date] = d.count;
+      if (d.count > max) max = d.count;
+    });
+
     const cols = [];
     let col = [];
-    data.forEach((d, i) => {
-      const dow = new Date(d.date).getDay();
+    skeleton.forEach((date, i) => {
+      const dow = new Date(date).getDay();
       const shifted = (dow + 6) % 7;
       if (i === 0) {
         for (let j = 0; j < shifted; j++) col.push(null);
       }
-      col.push(d);
+      col.push({ date, count: countMap[date] || 0 });
       if (shifted === 6) {
         cols.push(col);
         col = [];

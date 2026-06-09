@@ -1,5 +1,11 @@
 import userRepository from "../repositories/userRepository.js";
 import jwt from "jsonwebtoken";
+import User from "../models/user.js";
+import Habit from "../models/habit.js";
+import HabitLog from "../models/habitlog.js";
+import AIInsight from "../models/AIInsight.js";
+import Otp from "../models/Otp.js";
+import { sendOtpEmail } from "./emailService.js";
 
 class AuthService {
   signToken(id) {
@@ -28,12 +34,69 @@ class AuthService {
     return tag;
   }
 
-  async registerUser(userData) {
-    const { name, email, password } = userData;
+  async sendOtp(email) {
+    if (!email || typeof email !== "string" || !email.trim()) {
+      throw new Error("Valid email is required");
+    }
+    
     const userExists = await userRepository.findByEmail(email.toLowerCase());
     if (userExists) {
       throw new Error("User already exists");
     }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Clean up old OTPs for this email
+    await Otp.deleteMany({ email: email.toLowerCase() });
+
+    // Create new OTP
+    await Otp.create({ email: email.toLowerCase(), otp });
+
+    // Dispatch email
+    await sendOtpEmail(email, otp);
+    return true;
+  }
+
+  async verifyOtp(email, otp) {
+    if (!email || !otp) {
+      throw new Error("Email and OTP are required");
+    }
+
+    const record = await Otp.findOne({ email: email.toLowerCase(), otp });
+    if (!record) {
+      throw new Error("Invalid or expired verification code");
+    }
+    
+    return true;
+  }
+
+  async registerUser(userData) {
+    const { name, email, password } = userData;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      throw new Error("Valid name is required");
+    }
+    if (!email || typeof email !== "string" || !email.trim()) {
+      throw new Error("Valid email is required");
+    }
+    if (!password || typeof password !== "string" || password.length < 8) {
+      throw new Error("Valid password (at least 8 characters) is required");
+    }
+
+    // Verify OTP
+    if (!userData.otp) {
+      throw new Error("Verification code is required");
+    }
+    await this.verifyOtp(email, userData.otp);
+
+    const userExists = await userRepository.findByEmail(email.toLowerCase());
+    if (userExists) {
+      throw new Error("User already exists");
+    }
+
+    // Consume the OTP
+    await Otp.deleteMany({ email: email.toLowerCase() });
 
     const userTag = await this.generateUniqueUserTag();
 
@@ -65,23 +128,48 @@ class AuthService {
     if (!user) throw new Error("User not found");
 
     if (updateData.name !== undefined) {
-      user.name = updateData.name;
-      user.avatar = updateData.name.charAt(0).toUpperCase();
+      if (typeof updateData.name === "string" && updateData.name.trim() !== "") {
+        user.name = updateData.name;
+        user.avatar = updateData.name.charAt(0).toUpperCase();
+      }
     }
 
     if (updateData.morningMotivation !== undefined) {
-      user.morningMotivation = updateData.morningMotivation;
+      user.morningMotivation = Boolean(updateData.morningMotivation);
+    }
+
+    if (updateData.avatarUrl !== undefined) {
+      user.avatarUrl = updateData.avatarUrl;
     }
 
     await userRepository.save(user);
     return user;
   }
   async updateSettings(userId, settings) {
-    return await userRepository.updateSettings(userId, settings);
+    const safeSettings = {};
+    if (settings.reminderTime !== undefined) safeSettings.reminderTime = settings.reminderTime;
+    if (settings.morningMotivation !== undefined) safeSettings.morningMotivation = Boolean(settings.morningMotivation);
+
+    if (Object.keys(safeSettings).length === 0) {
+      return await userRepository.findById(userId);
+    }
+
+    return await userRepository.updateSettings(userId, safeSettings);
   }
 
   async savePushSubscription(userId, subscription) {
     return await userRepository.updateSettings(userId, { pushSubscription: subscription });
+  }
+
+  async removePushSubscription(userId) {
+    return await userRepository.updateSettings(userId, { pushSubscription: null });
+  }
+
+  async deleteAccount(userId) {
+    await Habit.deleteMany({ userId });
+    await HabitLog.deleteMany({ userId });
+    await AIInsight.deleteMany({ userId });
+    await User.findByIdAndDelete(userId);
   }
 }
 

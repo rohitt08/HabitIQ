@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
@@ -20,23 +21,17 @@ const app = express();
 
 const allowedOrigins = (process.env.CLIENT_URL || "")
     .split(",")
-    .map((s) => s.trim())
+    .map((s) => s.trim().replace(/\r/g, ""))
     .filter(Boolean);
 
 const corsOptions = {
     origin(origin, cb) {
-        // Allow requests with no origin (curl, same-origin, server-to-server)
-        if (!origin) return cb(null, true);
-
-        // Allow any localhost / 127.0.0.1 origin in development
-        if (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        // Allow requests with no origin (like mobile apps, curl, or postman)
+        // or check if the origin is explicitly allowed
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
             return cb(null, true);
         }
-
-        // Allow anything explicitly listed in CLIENT_URL (comma-separated)
-        if (allowedOrigins.includes(origin)) return cb(null, true);
-
-        return cb(new Error(`Origin ${origin} not allowed by CORS`));
+        return cb(new Error("Not allowed by CORS"));
     },
 
     credentials: true,
@@ -50,7 +45,8 @@ app.use(compression());
 
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 500, // Limit each IP to 500 requests per windowMs
+    limit: 200, // Limit each IP to 200 requests per windowMs (prevent DoS)
+    message: "Too many requests from this IP, please try again later",
     standardHeaders: 'draft-7',
     legacyHeaders: false,
 });
@@ -59,6 +55,8 @@ app.use(globalLimiter);
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
+// Sanitize data to prevent NoSQL injection
+app.use(mongoSanitize());
 app.use(cookieParser());
 app.use(requestLogger);
 

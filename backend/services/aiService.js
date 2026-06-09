@@ -30,6 +30,15 @@ class AIService {
   }
 
   async generateWeeklyReport(userId) {
+    // Rate limit: 1 report per day
+    const lastReport = await aiInsightRepository.findLatestByType(userId, "weekly");
+    if (lastReport) {
+      const hoursSince = (Date.now() - new Date(lastReport.createdAt)) / (1000 * 60 * 60);
+      if (hoursSince < 24) {
+        return { content: lastReport.content };
+      }
+    }
+
     const ctx = await this.buildWeeklyContext(userId);
 
     if (!ctx.perHabit.length) {
@@ -45,22 +54,27 @@ class AIService {
       )
       .join("\n")}"\n\nPlease write the personalised weekly report now.`;
 
-    const { content, ok } = await chatCompletion({
-      system: SYSTEM_PROMPTS.weekly,
-      user: userMsg,
-    });
+    try {
+      const { content, ok } = await chatCompletion({
+        system: SYSTEM_PROMPTS.weekly,
+        user: userMsg,
+      });
 
-    if (!ok) {
-      throw new Error(content);
+      if (!ok) {
+        return { content: "I'm currently taking a short break! Your weekly stats look great, keep up the good work. Please try generating your report again later." };
+      }
+
+      await aiInsightRepository.create({
+        userId,
+        type: "weekly",
+        content,
+      });
+
+      return { content };
+    } catch (err) {
+      console.error("Weekly report error:", err);
+      return { content: "I'm currently taking a short break! Your weekly stats look great, keep up the good work. Please try generating your report again later." };
     }
-
-    await aiInsightRepository.create({
-      userId,
-      type: "weekly",
-      content,
-    });
-
-    return { content };
   }
 
   async suggestHabits(userId, goals, productiveTime, struggles) {
@@ -256,6 +270,7 @@ class AIService {
 
     return { content };
   }
+
 }
 
 export default new AIService();

@@ -10,7 +10,7 @@ import AIInsight from "../models/AIInsight.js";
 
 const EMAIL = "demo@gmail.com";
 const PASSWORD = "password123";
-const NAME = "Demo Boy";
+const NAME = "Demo Boy [DEMO]";
 
 const HABITS = [
     {

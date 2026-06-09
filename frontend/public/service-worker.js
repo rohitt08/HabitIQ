@@ -4,9 +4,12 @@ self.addEventListener("push", (event) => {
   const title = data.title || "HabitIQ Reminder";
   const options = {
     body: data.body || "You have pending habits!",
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
+    badge: "/favicon.svg",
+    actions: data.actions || [],
+    vibrate: [200, 100, 200, 100, 200, 100, 200],
     data: {
-      url: data.url || "/",
+      url: data.url || "/dashboard",
     },
   };
 
@@ -15,6 +18,16 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  const action = event.action;
+  
+  if (action === "snooze") {
+    // Just close the notification (we already did above)
+    // Could optionally trigger an API call to postpone reminder
+    return;
+  }
+
+  // Handle default click or "open_app" action
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       if (clientList.length > 0) {

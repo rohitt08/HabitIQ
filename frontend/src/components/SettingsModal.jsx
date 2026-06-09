@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import Modal from "./Modal.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import api from "../api/axios.js";
+import TimePicker from "./TimePicker.jsx";
 
 export default function SettingsModal({ open, onClose }) {
   const { user, updateSettings } = useAuth();
@@ -65,9 +66,29 @@ export default function SettingsModal({ open, onClose }) {
 
       await api.post("/auth/push-subscription", subscription);
       setNotificationsEnabled(true);
+      updateSettings({ pushSubscription: subscription });
     } catch (err) {
       console.error("Failed to subscribe to push notifications", err);
       alert("Error enabling notifications");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unsubscribeFromPush = async () => {
+    try {
+      setLoading(true);
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
+      await api.delete("/auth/push-subscription");
+      setNotificationsEnabled(false);
+      updateSettings({ pushSubscription: null });
+    } catch (err) {
+      console.error("Failed to unsubscribe", err);
+      alert("Error disabling notifications");
     } finally {
       setLoading(false);
     }
@@ -87,54 +108,65 @@ export default function SettingsModal({ open, onClose }) {
 
   return (
     <Modal open={open} onClose={onClose} title="Settings" maxWidth="max-w-md">
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">Reminders</h3>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Bell size={18} className="text-indigo-500" />
-                <span className="font-medium">Web Push Notifications</span>
+      <div className="space-y-6 animate-fade-in">
+        
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 flex items-center gap-2">
+            <Bell size={14} />
+            Notifications
+          </h3>
+          
+          <div className="p-5 rounded-2xl glass border border-[var(--surface-border)] shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="font-semibold text-base">Web Push Reminders</div>
+                <div className="text-sm text-soft mt-0.5 leading-relaxed">
+                  Get a gentle nudge if you have pending habits.
+                </div>
               </div>
+              
               <button
                 type="button"
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notificationsEnabled ? "bg-indigo-500" : "bg-gray-300 dark:bg-gray-700"
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                  notificationsEnabled ? "bg-brand-500 shadow-md shadow-brand-500/30" : "bg-gray-300 dark:bg-gray-700"
                 }`}
-                onClick={notificationsEnabled ? () => {} : subscribeToPush}
-                disabled={loading || notificationsEnabled}
+                onClick={notificationsEnabled ? unsubscribeFromPush : subscribeToPush}
+                disabled={loading}
               >
+                <span className="sr-only">Toggle notifications</span>
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notificationsEnabled ? "translate-x-6" : "translate-x-1"
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    notificationsEnabled ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>
             </div>
             
-            <div>
-              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                Reminder Time
+            <div className="mt-5 pt-5 border-t divider">
+              <label className="block text-sm font-semibold mb-2 text-brand-900 dark:text-brand-100">
+                Daily Reminder Time
               </label>
-              <input
-                type="time"
-                className="input"
-                value={reminderTime}
-                onChange={(e) => setLocalReminderTime(e.target.value)}
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                We'll send you a reminder at this time if you have uncompleted habits.
+              <div className="relative overflow-hidden rounded-xl glass border border-[var(--surface-border)] shadow-inner group focus-within:ring-2 focus-within:ring-brand-500 transition-all mt-1">
+                <div className="absolute inset-0 bg-brand-500/5 pointer-events-none group-hover:bg-brand-500/10 transition-colors" />
+                <TimePicker
+                  value={reminderTime}
+                  onChange={setLocalReminderTime}
+                />
+              </div>
+              <p className="text-xs text-muted mt-2.5 leading-relaxed">
+                We'll only notify you if you haven't checked off your habits by this time. No spam, just a gentle reminder.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button className="btn-secondary" onClick={onClose} disabled={loading}>
+        <div className="flex justify-end gap-3 pt-2">
+          <button className="btn-secondary px-5" onClick={onClose} disabled={loading}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Settings"}
+          <button className="btn-primary px-6" onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save settings"}
           </button>
         </div>
       </div>

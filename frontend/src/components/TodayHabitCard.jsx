@@ -10,6 +10,7 @@ export default function TodayHabitCard({
   onEdit,
   onDelete,
   onArchive,
+  onRestricted,
 }) {
   const [menu, setMenu] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -26,6 +27,18 @@ export default function TodayHabitCard({
       left: rect.right - menuWidth,
     });
   }, [menu]);
+
+  const handleRestrictedAction = (action) => {
+    if (completed) {
+      const msg = "Oops, cannot modify now! You can modify or update your habit tomorrow.";
+      if (onRestricted) onRestricted(msg);
+      else alert(msg);
+      setMenu(false);
+      return;
+    }
+    setMenu(false);
+    action();
+  };
 
   useEffect(() => {
     if (!menu) return;
@@ -99,29 +112,20 @@ export default function TodayHabitCard({
               >
                 <button
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-soft hover:bg-[var(--surface-hover)]"
-                  onClick={() => {
-                    setMenu(false);
-                    onEdit();
-                  }}
+                  onClick={() => handleRestrictedAction(onEdit)}
                 >
                   <Pencil size={14} /> Edit
                 </button>
                 <button
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-soft hover:bg-[var(--surface-hover)]"
-                  onClick={() => {
-                    setMenu(false);
-                    onArchive();
-                  }}
+                  onClick={() => handleRestrictedAction(onArchive)}
                 >
                   <Archive size={14} />
                   {habit.isArchived ? "Unarchive" : "Archive"}
                 </button>
                 <button
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-500 hover:bg-rose-500/10"
-                  onClick={() => {
-                    setMenu(false);
-                    onDelete();
-                  }}
+                  onClick={() => handleRestrictedAction(onDelete)}
                 >
                   <Trash2 size={14} /> Delete
                 </button>
@@ -132,12 +136,21 @@ export default function TodayHabitCard({
       </div>
 
       <button
-        onClick={onToggle}
+        onClick={() => {
+          if (completed) {
+            const msg = "Completed for today! Come back tomorrow.";
+            if (onRestricted) onRestricted(msg);
+            else alert(msg);
+          } else {
+            onToggle();
+          }
+        }}
+        title={completed ? undefined : "Mark complete"}
         className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition ${completed
-          ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/40 animate-pop"
+          ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/40 animate-pop cursor-default opacity-90"
           : "bg-brand-100 border-2 border-border-brand-400 text-brand-400 hover:border-brand-400 hover:text-brand-400"
           }`}
-        aria-label={completed ? "Mark incomplete" : "Mark complete"}
+        aria-label={completed ? "Completed for today" : "Mark complete"}
       >
         <Check size={20} strokeWidth={3} />
       </button>

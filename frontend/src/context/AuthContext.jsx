@@ -40,8 +40,18 @@ export const AuthProvider = ({ children }) => {
     return res.data.user;
   };
 
-  const register = async (name, email, password) => {
-    const res = await api.post("/auth/register", { name, email, password });
+  const sendOtp = async (email) => {
+    const res = await api.post("/auth/send-otp", { email });
+    return res.data;
+  };
+
+  const verifyOtp = async (email, otp) => {
+    const res = await api.post("/auth/verify-otp", { email, otp });
+    return res.data;
+  };
+
+  const register = async (name, email, password, otp) => {
+    const res = await api.post("/auth/register", { name, email, password, otp });
     localStorage.setItem("user", JSON.stringify(res.data.user));
     if (res.data.token) {
       localStorage.setItem("token", res.data.token);
@@ -77,7 +87,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, updateUser, updateSettings }}
+      value={{ user, loading, login, register, logout, updateUser, updateSettings, sendOtp, verifyOtp }}
     >
       {children}
     </AuthContext.Provider>

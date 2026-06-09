@@ -3,6 +3,9 @@ import { Sun, X } from "lucide-react";
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Markdown from "./Markdown.jsx";
+import { format } from "date-fns";
+
+import { getISTDate } from "../utils/dateHelpers.js";
 
 export default function MorningMotivation() {
   const { user } = useAuth();
@@ -12,7 +15,10 @@ export default function MorningMotivation() {
 
   useEffect(() => {
     if (!user?.morningMotivation) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const isPastMorning = getISTDate().getHours() >= 12;
+    if (isPastMorning) return; // Don't fetch if it won't be shown
+
+    const today = format(getISTDate(), "yyyy-MM-dd");
     const seen = localStorage.getItem("morning-seen");
     const cachedContent = localStorage.getItem("morning-content");
     
@@ -41,7 +47,8 @@ export default function MorningMotivation() {
       .finally(() => setLoading(false));
   }, [user?.morningMotivation]);
 
-  if (!user?.morningMotivation || dismissed) return null;
+  const isPastMorning = getISTDate().getHours() >= 12;
+  if (!user?.morningMotivation || dismissed || isPastMorning) return null;
 
   return (
     <div className="relative rounded-2xl p-5 glass overflow-hidden animate-slide-up">

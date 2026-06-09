@@ -129,6 +129,7 @@ body,
   margin: 0;
   color: var(--text);
   background: var(--bg-base);
+  overflow-y: scroll; /* Force vertical scrollbar to prevent layout shift */
 }
 
 /* Aurora mesh background — sits behind everything */
@@ -237,6 +238,14 @@ body::before {
   .text-soft { color: var(--text-soft); }
   .text-muted { color: var(--text-muted); }
   .text-faint { color: var(--text-faint); }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* ---------- Animations ---------- */

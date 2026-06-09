@@ -11,7 +11,6 @@ const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const Habits = lazy(() => import("./pages/Habits.jsx"));
 const Weekly = lazy(() => import("./pages/Weekly.jsx"));
 const Insights = lazy(() => import("./pages/Insights.jsx"));
-const Stats = lazy(() => import("./pages/Stats.jsx"));
 
 export default function App() {
   return (
@@ -32,7 +31,6 @@ export default function App() {
           <Route path="/habits" element={<Habits />} />
           <Route path="/weekly" element={<Weekly />} />
           <Route path="/insights" element={<Insights />} />
-          <Route path="/stats" element={<Stats />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
