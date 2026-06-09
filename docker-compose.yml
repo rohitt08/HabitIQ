@@ -7,6 +7,9 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    environment:
+      - CLIENT_URL=http://localhost:3000
+      - NODE_ENV=production
     networks:
       - fullstack-net
     restart: unless-stopped
