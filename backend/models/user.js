@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
     },
 
     avatar: {
@@ -27,6 +27,32 @@ const userSchema = new mongoose.Schema(
     morningMotivation: {
       type: Boolean,
       default: false,
+    },
+
+    points: {
+      type: Number,
+      default: 0,
+    },
+
+    level: {
+      type: Number,
+      default: 1,
+    },
+
+    pushSubscription: {
+      type: Object,
+      default: null,
+    },
+
+    reminderTime: {
+      type: String,
+      default: "08:00",
+    },
+
+    userTag: {
+      type: String,
+      unique: true,
+      required: true,
     },
   },
   {
@@ -52,5 +78,7 @@ userSchema.methods.toJSON = function () {
   delete obj.password;
   return obj;
 };
+
+userSchema.index({ points: -1 });
 
 export default mongoose.model("user", userSchema);
