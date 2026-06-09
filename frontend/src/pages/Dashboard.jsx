@@ -250,9 +250,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex items-center gap-4">
-          <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center justify-between w-full md:w-auto gap-4">
+          <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">
               Hey {user?.name?.split(" ")[0]} 👋
             </h1>
@@ -264,12 +264,12 @@ export default function Dashboard() {
               })}
             </p>
           </div>
-          <div className="hidden sm:flex flex-col bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-xl border border-indigo-100 dark:border-indigo-800/50 ml-4">
+          <div className="flex flex-col bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 md:px-4 md:py-2 rounded-xl border border-indigo-100 dark:border-indigo-800/50 shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm font-bold text-indigo-700 dark:text-indigo-400">Level {user?.level || 1}</span>
               <span className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">{user?.points || 0} pts</span>
             </div>
-            <div className="w-32 h-2 bg-indigo-200 dark:bg-indigo-950 rounded-full overflow-hidden">
+            <div className="w-24 md:w-32 h-2 bg-indigo-200 dark:bg-indigo-950 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-indigo-500 rounded-full" 
                 style={{ width: `${(user?.points || 0) % 100}%` }}
@@ -277,16 +277,16 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
           <button
-            className="btn-secondary"
+            className="btn-secondary flex-1 md:flex-none justify-center"
             onClick={() => setSuggestOpen(true)}
           >
             <Sparkles size={14} />
-            <span className="hidden sm:inline">Suggest a habit</span>
+            <span className="inline">Suggest a habit</span>
           </button>
           <button
-            className="btn-primary"
+            className="btn-primary flex-1 md:flex-none justify-center"
             onClick={() => {
               setEditing(null);
               setFormOpen(true);
