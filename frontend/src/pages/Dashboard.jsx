@@ -12,9 +12,8 @@ import MorningMotivation from "../components/MorningMotivation.jsx";
 import HabitSuggestionModal from "../components/HabitSuggestionModal.jsx";
 import StreakRecoveryCard from "../components/StreakRecoveryCard.jsx";
 import ProgressRing from "../components/ProgressRing.jsx";
-import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { celebrate, celebrateBig } from "../utils/confetti.js";
-import { streakFromKeys, todayKey, weekKeys } from "../utils/dateHelpers.js";
+import { todayKey, weekKeys } from "../utils/dateHelpers.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Dashboard() {
@@ -149,6 +148,7 @@ export default function Dashboard() {
       }
     } else {
       // Optimistic update
+      // eslint-disable-next-line react-hooks/purity
       const tempLog = { _id: "temp-" + Date.now(), habitId: habit._id, completedDate: today };
       setTodayLogs((logs) => [...logs, tempLog]);
       setStreaksById((prev) => {

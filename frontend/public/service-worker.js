@@ -1,4 +1,4 @@
-/* eslint-env serviceworker */
+/* eslint-disable no-undef */
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || "HabitIQ Reminder";

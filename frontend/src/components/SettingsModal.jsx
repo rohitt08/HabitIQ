@@ -18,6 +18,7 @@ export default function SettingsModal({ open, onClose }) {
 
   useEffect(() => {
     if (user?.pushSubscription && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotificationsEnabled(true);
     }
   }, [user?.pushSubscription]);
