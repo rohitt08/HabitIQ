@@ -15,7 +15,7 @@ const Stats = lazy(() => import("./pages/Stats.jsx"));
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-zinc-950"><LoadingSpinner /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><LoadingSpinner /></div>}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

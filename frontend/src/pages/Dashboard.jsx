@@ -4,7 +4,7 @@ import api from "../api/axios.js";
 import Modal from "../components/Modal.jsx";
 import HabitForm from "../components/HabitForm.jsx";
 import TodayHabitCard from "../components/TodayHabitCard.jsx";
-import WeeklyGrid from "../components/WeeklyGrid.jsx";
+import Leaderboard from "../components/Leaderboard.jsx";
 import HeatmapChart from "../components/HeatmapChart.jsx";
 import SummaryCards from "../components/SummaryCards.jsx";
 import AIWeeklyReport from "../components/AIWeeklyReport.jsx";
@@ -23,7 +23,7 @@ export default function Dashboard() {
   const [todayLogs, setTodayLogs] = useState([]);
   const [weekLogs, setWeekLogs] = useState([]);
   const [heatmap, setHeatmap] = useState([]);
-  const [allLogsByHabit, setAllLogsByHabit] = useState({});
+  const [streaksById, setStreaksById] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -41,33 +41,19 @@ export default function Dashboard() {
       const start = week[0].key;
       const end = week[week.length - 1].key;
 
-      const start90 = new Date();
-      start90.setDate(start90.getDate() - 89);
-      const s90 = start90.toISOString().slice(0, 10);
-      const e90 = new Date().toISOString().slice(0, 10);
-
-      const [habitsRes, todayRes, rangeRes, heatRes, allRange] = await Promise.all([
+      const [habitsRes, todayRes, rangeRes, heatRes, streaksRes] = await Promise.all([
         api.get("/habits"),
         api.get("/logs/today", { params: { date: todayKey() } }),
         api.get("/logs/range", { params: { start, end } }),
         api.get("/logs/heatmap", { params: { endDate: todayKey() } }),
-        api.get("/logs/range", { params: { start: s90, end: e90 } }),
+        api.get("/logs/dashboard-streaks"),
       ]);
 
       setHabits(habitsRes.data);
       setTodayLogs(todayRes.data);
       setWeekLogs(rangeRes.data);
       setHeatmap(heatRes.data);
-
-      const byId = {};
-      for (const h of habitsRes.data) byId[h._id] = [];
-      for (const l of allRange.data) {
-        if (!byId[l.habitId]) byId[l.habitId] = [];
-        byId[l.habitId].push(l.completedDate);
-      }
-      for (const k of Object.keys(byId))
-        byId[k] = byId[k].sort().reverse();
-      setAllLogsByHabit(byId);
+      setStreaksById(streaksRes.data);
     } finally {
       setLoading(false);
     }
@@ -101,13 +87,7 @@ export default function Dashboard() {
     return out;
   }, [weekLogs]);
 
-  const streaksById = useMemo(() => {
-    const out = {};
-    for (const h of habits) {
-      out[h._id] = streakFromKeys(allLogsByHabit[h._id] || []);
-    }
-    return out;
-  }, [habits, allLogsByHabit]);
+
 
   const todayProgress = habits.length
     ? Math.round((completedToday.size / habits.length) * 100)
@@ -150,33 +130,52 @@ export default function Dashboard() {
     const done = completedToday.has(String(habit._id));
     const today = todayKey();
     if (done) {
-      await api.delete("/logs", {
-        data: { habitId: habit._id, date: today },
-      });
+      // Optimistic update
       setTodayLogs((logs) =>
         logs.filter((l) => String(l.habitId) !== String(habit._id))
       );
-      setAllLogsByHabit((prev) => {
-        const next = { ...prev };
-        next[habit._id] = (next[habit._id] || []).filter((d) => d !== today);
-        return next;
+      setStreaksById((prev) => {
+        const s = prev[habit._id] || { current: 1, longest: 1 };
+        return { ...prev, [habit._id]: { ...s, current: Math.max(0, s.current - 1) } };
       });
+
+      try {
+        await api.delete("/logs", {
+          data: { habitId: habit._id, date: today },
+        });
+      } catch (err) {
+        console.error("Failed to delete log", err);
+        loadAll(); // Revert on error
+      }
     } else {
-      const res = await api.post("/logs", { habitId: habit._id, date: today });
-      setTodayLogs((logs) => [...logs, res.data]);
-      setAllLogsByHabit((prev) => {
-        const next = { ...prev };
-        next[habit._id] = [today, ...(next[habit._id] || [])];
-        return next;
+      // Optimistic update
+      const tempLog = { _id: "temp-" + Date.now(), habitId: habit._id, completedDate: today };
+      setTodayLogs((logs) => [...logs, tempLog]);
+      setStreaksById((prev) => {
+        const s = prev[habit._id] || { current: 0, longest: 0 };
+        const nextCur = s.current + 1;
+        return { 
+          ...prev, 
+          [habit._id]: { current: nextCur, longest: Math.max(s.longest, nextCur) } 
+        };
       });
+      
       celebrate();
-      // Trigger big celebration if this completes all today's habits
       setTimeout(() => {
-        const nextDone = completedToday.size + 1;
-        if (nextDone === habits.length && habits.length > 0) {
+        const nextDone = completedToday.size + 1; // It was incremented optimistically
+        if (nextDone >= habits.length && habits.length > 0) {
           celebrateBig();
         }
       }, 150);
+
+      try {
+        const res = await api.post("/logs", { habitId: habit._id, date: today });
+        // Replace temp log with real log
+        setTodayLogs((logs) => logs.map(l => l._id === tempLog._id ? res.data : l));
+      } catch (err) {
+        console.error("Failed to add log", err);
+        loadAll(); // Revert on error
+      }
     }
   };
 
@@ -189,7 +188,7 @@ export default function Dashboard() {
       } else {
         const res = await api.post("/habits", data);
         setHabits((hs) => [...hs, res.data]);
-        setAllLogsByHabit((p) => ({ ...p, [res.data._id]: [] }));
+        setStreaksById((p) => ({ ...p, [res.data._id]: { current: 0, longest: 0 } }));
       }
       setFormOpen(false);
       setEditing(null);
@@ -204,7 +203,7 @@ export default function Dashboard() {
     setTodayLogs((ls) =>
       ls.filter((l) => String(l.habitId) !== String(habit._id))
     );
-    setAllLogsByHabit((prev) => {
+    setStreaksById((prev) => {
       const next = { ...prev };
       delete next[habit._id];
       return next;
@@ -229,25 +228,54 @@ export default function Dashboard() {
       targetDays: s.frequency === "daily" ? 7 : 3,
     });
     setHabits((hs) => [...hs, res.data]);
-    setAllLogsByHabit((p) => ({ ...p, [res.data._id]: [] }));
+    setStreaksById((p) => ({ ...p, [res.data._id]: { current: 0, longest: 0 } }));
   };
 
-  if (loading) return <LoadingSpinner full />;
+  if (loading) return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="h-10 w-48 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+        <div className="flex gap-2">
+          <div className="hidden sm:block h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+          <div className="h-10 w-32 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+        </div>
+      </div>
+      <div className="h-24 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>)}
+      </div>
+      <div className="h-64 bg-gray-100 dark:bg-gray-800/50 rounded-2xl mt-6"></div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">
-            Hey {user?.name?.split(" ")[0]} 👋
-          </h1>
-          <p className="text-sm text-muted mt-0.5 truncate">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+        <div className="min-w-0 flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">
+              Hey {user?.name?.split(" ")[0]} 👋
+            </h1>
+            <p className="text-sm text-muted mt-0.5 truncate">
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+          <div className="hidden sm:flex flex-col bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-xl border border-indigo-100 dark:border-indigo-800/50 ml-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-bold text-indigo-700 dark:text-indigo-400">Level {user?.level || 1}</span>
+              <span className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">{user?.points || 0} pts</span>
+            </div>
+            <div className="w-32 h-2 bg-indigo-200 dark:bg-indigo-950 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-500 rounded-full" 
+                style={{ width: `${(user?.points || 0) % 100}%` }}
+              />
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -354,7 +382,7 @@ export default function Dashboard() {
 
       <div className="grid lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8 min-w-0">
-          <WeeklyGrid habits={habits} logsByHabit={weekLogsByHabit} />
+          <Leaderboard />
         </div>
         <div className="lg:col-span-4 min-w-0">
           <HeatmapChart data={heatmap} />

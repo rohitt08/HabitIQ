@@ -7,6 +7,7 @@ import {
     getHeatmap,
     getHabitStats,
     getAllStats,
+    getDashboardStreaks,
 } from "../controllers/logController.js";
 
 import { protect } from "../middleware/auth.js";
@@ -20,6 +21,7 @@ router.delete("/", unmarkComplete);
 router.get("/today", getToday);
 router.get("/range", getRange);
 router.get("/heatmap", getHeatmap);
+router.get("/dashboard-streaks", getDashboardStreaks);
 router.get("/stats", getAllStats);
 router.get("/stats/:habitId", getHabitStats);
 

@@ -24,7 +24,6 @@ export const AuthProvider = ({ children }) => {
       })
       .catch(() => {
         localStorage.removeItem("user");
-        localStorage.removeItem("token");
         setUser(null);
       })
       .finally(() => setLoading(false));
@@ -33,7 +32,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("user", JSON.stringify(res.data.user));
-    if (res.data.token) localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
     return res.data.user;
   };
@@ -41,7 +39,6 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     const res = await api.post("/auth/register", { name, email, password });
     localStorage.setItem("user", JSON.stringify(res.data.user));
-    if (res.data.token) localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
     return res.data.user;
   };
@@ -53,11 +50,10 @@ export const AuthProvider = ({ children }) => {
       console.error(err);
     }
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
     localStorage.removeItem("ai-chat");
     sessionStorage.removeItem("ai-chat");
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   const updateUser = (u) => {
@@ -65,9 +61,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(u));
   };
 
+  const updateSettings = async (settings) => {
+    const res = await api.put("/auth/settings", settings);
+    updateUser(res.data.user);
+    return res.data.user;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, updateUser }}
+      value={{ user, loading, login, register, logout, updateUser, updateSettings }}
     >
       {children}
     </AuthContext.Provider>

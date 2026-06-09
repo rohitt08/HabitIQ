@@ -73,3 +73,12 @@ export const getAllStats = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getDashboardStreaks = async (req, res, next) => {
+  try {
+    const streaks = await logService.getDashboardStreaks(req.user._id);
+    res.json(streaks);
+  } catch (err) {
+    next(err);
+  }
+};

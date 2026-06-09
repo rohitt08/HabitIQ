@@ -1,5 +1,6 @@
 import habitLogRepository from "../repositories/habitLogRepository.js";
 import habitRepository from "../repositories/habitRepository.js";
+import userRepository from "../repositories/userRepository.js";
 import { todayKey, last90Days, lastNDays, calcStreak } from "../utils/dateHelpers.js";
 
 class LogService {
@@ -11,12 +12,22 @@ class LogService {
       throw new Error("Habit not found");
     }
 
-    return await habitLogRepository.upsertLog(userId, habitId, completedDate);
+    const log = await habitLogRepository.upsertLog(userId, habitId, completedDate);
+    
+    // Add points for completing habit
+    await userRepository.updatePointsAndLevel(userId, 10);
+    
+    return log;
   }
 
   async unmarkComplete(userId, habitId, date) {
     const completedDate = date || todayKey();
-    return await habitLogRepository.deleteLog(userId, habitId, completedDate);
+    const result = await habitLogRepository.deleteLog(userId, habitId, completedDate);
+    
+    // Deduct points for uncompleting
+    await userRepository.updatePointsAndLevel(userId, -10);
+    
+    return result;
   }
 
   async getTodayLogs(userId, date) {
@@ -140,6 +151,25 @@ class LogService {
     });
 
     return { perHabit, days };
+  async getDashboardStreaks(userId) {
+    const habits = await habitRepository.findByUserId(userId, false);
+    const aggregated = await habitLogRepository.aggregateLogs([
+      { $match: { userId } },
+      { $group: { _id: "$habitId", dates: { $push: "$completedDate" } } },
+    ]);
+
+    const statsMap = {};
+    for (const agg of aggregated) {
+      statsMap[agg._id.toString()] = agg;
+    }
+
+    const streaksById = {};
+    for (const h of habits) {
+      const agg = statsMap[h._id.toString()];
+      const keys = agg ? agg.dates.sort().reverse() : [];
+      streaksById[h._id.toString()] = calcStreak(keys);
+    }
+    return streaksById;
   }
 }
 

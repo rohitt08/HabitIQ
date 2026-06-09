@@ -32,12 +32,66 @@ export default function Sidebar() {
   const [morning, setMorning] = useState(user?.morningMotivation || false);
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
+  const [reminderTime, setReminderTime] = useState(user?.reminderTime || "08:00");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    user?.pushSubscription && Notification.permission === "granted"
+  );
 
   useEffect(() => {
     const handle = () => setSettingsOpen(true);
     window.addEventListener("open-settings", handle);
     return () => window.removeEventListener("open-settings", handle);
   }, []);
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const subscribeToPush = async () => {
+    try {
+      setSaving(true);
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("Push notifications are not supported by your browser.");
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        alert("Permission denied for push notifications");
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        const res = await api.get("/auth/vapid-public-key");
+        const publicKey = res.data.publicKey;
+        
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+      }
+
+      await api.post("/auth/push-subscription", subscription);
+      setNotificationsEnabled(true);
+    } catch (err) {
+      console.error("Failed to subscribe to push notifications", err);
+      alert("Error enabling notifications");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -46,7 +100,10 @@ export default function Sidebar() {
         name,
         morningMotivation: morning,
       });
-      updateUser(res.data.user);
+      await api.put("/auth/settings", { reminderTime });
+      
+      const updatedUser = { ...res.data.user, reminderTime };
+      updateUser(updatedUser);
       setSettingsOpen(false);
     } finally {
       setSaving(false);
@@ -105,6 +162,11 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium truncate">{user?.name}</div>
+            {user?.userTag && (
+              <div className="text-[10px] text-brand-500 font-mono tracking-wider">
+                {user.userTag}
+              </div>
+            )}
             <div className="text-xs text-faint truncate">{user?.email}</div>
           </div>
           <button
@@ -132,6 +194,7 @@ export default function Sidebar() {
             />
           </div>
 
+          <div className="pt-2 border-t divider" />
           <label className="flex items-start gap-3 p-3 rounded-xl glass cursor-pointer hover:bg-[var(--surface-hover)]">
             <input
               type="checkbox"
@@ -147,6 +210,39 @@ export default function Sidebar() {
               </div>
             </div>
           </label>
+
+          <div className="pt-2 border-t divider" />
+          
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-medium">Web Push Notifications</div>
+              <button
+                type="button"
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  notificationsEnabled ? "bg-brand-500" : "bg-gray-300 dark:bg-gray-700"
+                }`}
+                onClick={notificationsEnabled ? () => {} : subscribeToPush}
+                disabled={saving || notificationsEnabled}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                    notificationsEnabled ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="text-xs text-faint mb-3">
+              Enable notifications to get a reminder if you have pending habits.
+            </div>
+            
+            <label className="label">Reminder Time</label>
+            <input
+              type="time"
+              className="input"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+            />
+          </div>
 
           <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
             <button
