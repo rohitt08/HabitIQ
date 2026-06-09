@@ -73,6 +73,7 @@ export default function Dashboard() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewDate]);
 
   useEffect(() => {
@@ -164,7 +165,6 @@ export default function Dashboard() {
 
   const toggle = async (habit) => {
     const done = completedToday.has(String(habit._id));
-    const isToday = viewDate === todayKey();
     if (done) {
       return; // Locked for the day
     } else {

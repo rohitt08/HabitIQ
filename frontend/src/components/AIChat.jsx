@@ -64,6 +64,7 @@ export default function AIChat() {
         setRateLimitOpen(true);
         setMessages((m) => m.slice(0, -1)); // Remove the user's question since it wasn't answered
       } else {
+        const isTimeout = err.name === "AbortError" || err.code === "ECONNABORTED";
         setMessages((m) => [
           ...m,
           {

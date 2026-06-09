@@ -1,7 +1,7 @@
 services:
   server:
     build: ./backend
-    image: habitiq-server:V2.0.0
+    image: habitiq-server:V3.0.1
     container_name: habit-server
     ports:
       - "8000:8000"
@@ -22,7 +22,7 @@ services:
 
   client:
     build: ./frontend
-    image: habitiq-client:V2.0.0
+    image: habitiq-client:V3.0.1
     container_name: habit-client
     ports:
       - "3000:8080"

@@ -11,6 +11,7 @@ const Wheel = ({ options, value, onChange }) => {
            ref.current.scrollTop = index * 40;
        }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
 
   const handleScroll = (e) => {
@@ -78,6 +79,7 @@ export default function TimePicker({ value, onChange }) {
 
   useEffect(() => {
     onChange(formatOutput(hour, minute, period));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hour, minute, period]);
 
   const displayVal = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")} ${period}`;
