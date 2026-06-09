@@ -15,11 +15,10 @@ export default function DatePicker({ selectedDate, onSelect }) {
   const rows = [];
   let days = [];
   let day = startDate;
-  let formattedDate = "";
 
   while (day <= endDate) {
     for (let i = 0; i < 7; i++) {
-      formattedDate = format(day, dateFormat);
+      const formattedDate = format(day, dateFormat);
       const cloneDay = day;
       days.push(
         <button

@@ -164,7 +164,6 @@ export default function Dashboard() {
 
   const toggle = async (habit) => {
     const done = completedToday.has(String(habit._id));
-    const isToday = viewDate === todayKey();
     if (done) {
       return; // Locked for the day
     } else {

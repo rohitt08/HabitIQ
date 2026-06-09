@@ -33,7 +33,8 @@ export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
     }
 
     // Strip out the local 'customCategory' state when submitting
-    const { customCategory, ...submitData } = form;
+    const submitData = { ...form };
+    delete submitData.customCategory;
 
     onSubmit({
       ...submitData,

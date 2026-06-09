@@ -4,7 +4,6 @@ import {
   ListChecks,
   CalendarDays,
   Brain,
-  BarChart3,
   LogOut,
   Settings,
   Sparkles,
