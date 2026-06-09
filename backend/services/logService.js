@@ -151,6 +151,8 @@ class LogService {
     });
 
     return { perHabit, days };
+  }
+
   async getDashboardStreaks(userId) {
     const habits = await habitRepository.findByUserId(userId, false);
     const aggregated = await habitLogRepository.aggregateLogs([
