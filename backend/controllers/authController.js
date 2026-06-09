@@ -18,7 +18,7 @@ export const register = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(201).json({ user });
+    res.status(201).json({ user, token });
   } catch (err) {
     if (err.message === "User already exists") {
       return res.status(400).json({ message: err.message });
@@ -42,7 +42,7 @@ export const login = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ user });
+    res.json({ user, token });
   } catch (err) {
     if (err.message === "Invalid email or password") {
       return res.status(401).json({ message: err.message });
