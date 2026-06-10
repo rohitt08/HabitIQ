@@ -16,7 +16,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       // Connect to the backend
-      const defaultBackendUrl = import.meta.env.PROD ? "" : "http://localhost:8000";
+      const defaultBackendUrl = import.meta.env.PROD ? "" : `http://${window.location.hostname}:8000`;
       const backendUrl = (import.meta.env.VITE_API_URL || defaultBackendUrl).replace("/api", "");
       const newSocket = io(backendUrl || "/", {
         withCredentials: true, // Send cookies automatically
