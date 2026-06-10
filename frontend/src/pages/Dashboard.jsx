@@ -12,13 +12,14 @@ import MorningMotivation from "../components/MorningMotivation.jsx";
 import HabitSuggestionModal from "../components/HabitSuggestionModal.jsx";
 import StreakRecoveryCard from "../components/StreakRecoveryCard.jsx";
 import ProgressRing from "../components/ProgressRing.jsx";
+import FriendsManager from "../components/FriendsManager.jsx";
 import { celebrate, celebrateBig } from "../utils/confetti.js";
 import { getISTDate, todayKey, toKey, shortDate } from "../utils/dateHelpers.js";
 import { subDays } from "date-fns";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [habits, setHabits] = useState([]);
   const [viewDate, setViewDate] = useState(todayKey());
   const [todayLogs, setTodayLogs] = useState([]);
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [heatmapOffset, setHeatmapOffset] = useState(0);
 
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -53,7 +55,7 @@ export default function Dashboard() {
         api.get("/habits"),
         api.get("/logs/today", { params: { date: viewDate } }),
         api.get("/logs/range", { params: { start, end } }),
-        api.get("/logs/heatmap", { params: { endDate: todayKey() } }),
+        api.get("/logs/heatmap", { params: { endDate: toKey(subDays(getISTDate(), heatmapOffset)) } }),
         api.get("/logs/dashboard-streaks"),
       ]);
 
@@ -82,6 +84,20 @@ export default function Dashboard() {
       hasSuggested.current = true;
     }
   }, [loading, habits.length]);
+
+  useEffect(() => {
+    if (loading) return; // Prevent double fetch on mount
+    const fetchHeatmap = async () => {
+      try {
+        const end = toKey(subDays(getISTDate(), heatmapOffset));
+        const res = await api.get("/logs/heatmap", { params: { endDate: end } });
+        setHeatmap(res.data);
+      } catch (err) {
+        console.error("Error fetching heatmap", err);
+      }
+    };
+    fetchHeatmap();
+  }, [heatmapOffset]);
 
   const lastToday = useRef(todayKey());
 
@@ -191,8 +207,13 @@ export default function Dashboard() {
 
       try {
         const res = await api.post("/logs", { habitId: habit._id, date: viewDate });
-        // Replace temp log with real log
-        setTodayLogs((logs) => logs.map(l => l._id === tempLog._id ? res.data : l));
+        
+        // The backend now returns { log, user }
+        setTodayLogs((logs) => logs.map(l => l._id === tempLog._id ? (res.data.log || res.data) : l));
+        
+        if (res.data.user) {
+          updateUser(res.data.user);
+        }
       } catch (err) {
         console.error("Failed to add log", err);
         loadAll(); // Revert on error
@@ -298,8 +319,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full md:w-auto gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full lg:w-auto gap-4 flex-1 min-w-[280px]">
           <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">
               Hey {user?.name?.split(" ")[0]} 👋
@@ -320,9 +341,13 @@ export default function Dashboard() {
               </div>
               {user?.badges?.length > 0 && (
                 <div className="flex items-center gap-1 shrink-0">
-                  {user.badges.includes("FIRST_HABIT") && <span title="Starter" className="text-sm leading-none shrink-0">🌟</span>}
-                  {user.badges.includes("STREAK_7") && <span title="Week Warrior" className="text-sm leading-none shrink-0">🔥</span>}
-                  {user.badges.includes("LEVEL_5") && <span title="Rising Star" className="text-sm leading-none shrink-0">⭐</span>}
+                  {user.badges.includes("FIRST_STEP") && <span title="First Step" className="text-sm leading-none shrink-0">🌱</span>}
+                  {user.badges.includes("EXPLORER") && <span title="Explorer" className="text-sm leading-none shrink-0">🧭</span>}
+                  {user.badges.includes("ACHIEVER") && <span title="Achiever" className="text-sm leading-none shrink-0">🎯</span>}
+                  {user.badges.includes("GUARDIAN") && <span title="Guardian" className="text-sm leading-none shrink-0">🛡️</span>}
+                  {user.badges.includes("ELITE") && <span title="Elite" className="text-sm leading-none shrink-0">💠</span>}
+                  {user.badges.includes("TITAN") && <span title="Titan" className="text-sm leading-none shrink-0">⚡</span>}
+                  {user.badges.includes("LEGEND") && <span title="Legend" className="text-sm leading-none shrink-0">👑</span>}
                 </div>
               )}
             </div>
@@ -335,22 +360,22 @@ export default function Dashboard() {
           </div>
         </div>
         {viewDate === todayKey() && (
-          <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+          <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
             <button
-              className="btn-secondary flex-1 md:flex-none justify-center"
+              className="btn-secondary flex-1 lg:flex-none justify-center whitespace-nowrap"
               onClick={() => setSuggestOpen(true)}
             >
-              <Sparkles size={14} />
+              <Sparkles size={14} className="shrink-0" />
               <span className="inline">Suggest a habit</span>
             </button>
             <button
-              className="btn-primary flex-1 md:flex-none justify-center"
+              className="btn-primary flex-1 lg:flex-none justify-center whitespace-nowrap"
               onClick={() => {
                 setEditing(null);
                 setFormOpen(true);
               }}
             >
-              <Plus size={14} />
+              <Plus size={14} className="shrink-0" />
               New habit
             </button>
           </div>
@@ -476,8 +501,14 @@ export default function Dashboard() {
         <div className="lg:col-span-8 min-w-0">
           <Leaderboard />
         </div>
-        <div className="lg:col-span-4 min-w-0">
-          <HeatmapChart data={heatmap} />
+        <div className="lg:col-span-4 min-w-0 flex flex-col gap-5">
+          <HeatmapChart 
+            data={heatmap} 
+            offset={heatmapOffset} 
+            onPrevious={() => setHeatmapOffset(prev => prev + 90)} 
+            onNext={() => setHeatmapOffset(prev => Math.max(0, prev - 90))} 
+          />
+          <FriendsManager />
         </div>
       </div>
 

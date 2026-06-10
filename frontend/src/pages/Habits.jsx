@@ -214,7 +214,7 @@ export default function Habits() {
             {dropdownOpen && (
               <>
                 <div className="fixed inset-0 z-0" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute top-full mt-2 w-full glass-strong rounded-xl shadow-xl z-10 overflow-hidden py-1 animate-fade-in border border-[var(--surface-border)]">
+                <div className="absolute top-full mt-2 w-full bg-white/95 dark:bg-[#1a1a24]/98 backdrop-blur-xl rounded-xl shadow-xl z-10 overflow-hidden py-1 animate-fade-in border border-[var(--surface-border)]">
                   <button
                     onClick={() => {
                       setCategory("All");

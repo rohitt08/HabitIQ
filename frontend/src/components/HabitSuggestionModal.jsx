@@ -56,7 +56,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
           <div>
             <label className="label">What are your goals right now?</label>
             <textarea
-              className="input resize-none"
+              className="input resize-none appearance-none dark:bg-[#1a1a24]/50"
               rows={3}
               placeholder="e.g. Get fitter, read more, reduce phone time..."
               value={goals}
@@ -64,7 +64,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
+          <div className="pt-4 border-t divider mt-6 flex justify-end gap-2">
             <button className="btn-secondary" onClick={close}>
               Cancel
             </button>
@@ -86,7 +86,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               When are you most productive during the day?
             </label>
             <textarea
-              className="input resize-none"
+              className="input resize-none appearance-none dark:bg-[#1a1a24]/50"
               rows={3}
               placeholder="e.g. Early morning, late evenings..."
               value={productiveTime}
@@ -94,7 +94,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-between gap-2">
+          <div className="pt-4 border-t divider mt-6 flex justify-between gap-2">
             <button className="btn-ghost" onClick={() => setStep(0)}>
               Back
             </button>
@@ -114,7 +114,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
           <div>
             <label className="label">What habits have you struggled with?</label>
             <textarea
-              className="input resize-none"
+              className="input resize-none appearance-none dark:bg-[#1a1a24]/50"
               rows={3}
               placeholder="e.g. Gym in the morning, journaling at night..."
               value={struggles}
@@ -122,7 +122,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               autoFocus
             />
           </div>
-          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-between gap-2">
+          <div className="pt-4 border-t divider mt-6 flex justify-between gap-2">
             <button className="btn-ghost" onClick={() => setStep(1)}>
               Back
             </button>
@@ -185,7 +185,7 @@ export default function HabitSuggestionModal({ open, onClose, onAccept }) {
               </div>
             </div>
           ))}
-          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end">
+          <div className="pt-4 border-t divider mt-6 flex justify-end">
             <button className="btn-secondary" onClick={close}>
               Done
             </button>

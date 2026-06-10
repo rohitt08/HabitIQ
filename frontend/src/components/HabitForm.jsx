@@ -60,7 +60,7 @@ export default function HabitForm({ initial, onSubmit, onCancel, submitting }) {
       <div>
         <label className="label">Description</label>
         <textarea
-          className="input resize-none"
+          className="input resize-none appearance-none dark:bg-[#1a1a24]/50"
           rows={2}
           placeholder="Why does this habit matter to you?"
           value={form.description}

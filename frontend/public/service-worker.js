@@ -4,8 +4,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "HabitIQ Reminder";
   const options = {
     body: data.body || "You have pending habits!",
-    icon: "/favicon.svg",
-    badge: "/favicon.svg",
+    icon: "/habitiq-logo.png",
+    badge: "/habitiq-logo.png",
     actions: data.actions || [],
     vibrate: [200, 100, 200, 100, 200, 100, 200],
     data: {

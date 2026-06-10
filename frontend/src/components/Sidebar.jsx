@@ -174,9 +174,9 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${isActive
-                ? "bg-gradient-to-r from-brand-500/15 to-brand-500/5 text-brand-700 dark:text-brand-300 ring-1 ring-brand-500/20"
-                : "text-soft hover:bg-[var(--surface-hover)]"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ease-out active:scale-[0.98] ${isActive
+                ? "bg-gradient-to-r from-brand-500/15 to-brand-500/5 text-brand-700 dark:text-brand-300 ring-1 ring-brand-500/20 shadow-sm"
+                : "text-soft hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
               }`
             }
           >
@@ -203,8 +203,8 @@ export default function Sidebar() {
           Settings
         </button>
 
-        <div className="px-2 py-2 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold flex items-center justify-center shadow-md shadow-brand-500/30 overflow-hidden shrink-0">
+        <div className="mt-2 p-3 flex items-center gap-3 rounded-xl border border-orange-500/30 backdrop-blur-md bg-orange-500/5 dark:bg-orange-500/10 shadow-sm hover:shadow-md hover:border-orange-500/60 transition-all group">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold flex items-center justify-center shadow-md shadow-brand-500/30 overflow-hidden shrink-0">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -212,18 +212,18 @@ export default function Sidebar() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">{user?.name}</div>
+            <div className="text-sm font-medium truncate text-[var(--text)]">{user?.name}</div>
             {user?.userTag && (
-              <div className="text-[10px] text-brand-500 font-mono tracking-wider">
-                {user.userTag}
+              <div className="text-[10px] text-brand-500 font-mono tracking-wider truncate">
+                #{user.userTag.replace(/^#/, "")}
               </div>
             )}
-            <div className="text-xs text-faint truncate">{user?.email}</div>
+            <div className="text-[10px] text-faint truncate opacity-80">{user?.email}</div>
           </div>
           <button
             onClick={logout}
             title="Log out"
-            className="p-2 rounded-lg text-soft hover:bg-[var(--surface-hover)]"
+            className="p-2 rounded-lg text-soft hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 transition-colors opacity-70 group-hover:opacity-100"
           >
             <LogOut size={16} />
           </button>
@@ -325,7 +325,7 @@ export default function Sidebar() {
             </button>
           </div>
 
-          <div className="sticky bottom-0 bg-[var(--bg-base)] dark:bg-[var(--surface)] -mx-6 px-6 py-4 border-t divider mt-6 z-10 flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-6 mt-4 border-t divider">
             <button
               className="btn-secondary"
               onClick={() => setSettingsOpen(false)}

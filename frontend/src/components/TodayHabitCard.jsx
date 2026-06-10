@@ -146,9 +146,9 @@ export default function TodayHabitCard({
           }
         }}
         title={completed ? undefined : "Mark complete"}
-        className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition ${completed
+        className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ease-out active:scale-90 ${completed
           ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/40 animate-pop cursor-default opacity-90"
-          : "bg-brand-100 border-2 border-border-brand-400 text-brand-400 hover:border-brand-400 hover:text-brand-400"
+          : "bg-white/50 dark:bg-black/20 border-2 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-brand-500 hover:text-brand-500 hover:shadow-xl hover:shadow-brand-500/20 cursor-pointer"
           }`}
         aria-label={completed ? "Completed for today" : "Mark complete"}
       >

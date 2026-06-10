@@ -15,8 +15,6 @@ export default function MorningMotivation() {
 
   useEffect(() => {
     if (!user?.morningMotivation) return;
-    const isPastMorning = getISTDate().getHours() >= 12;
-    if (isPastMorning) return; // Don't fetch if it won't be shown
 
     const today = format(getISTDate(), "yyyy-MM-dd");
     const seen = localStorage.getItem("morning-seen");
@@ -33,22 +31,26 @@ export default function MorningMotivation() {
     api
       .get("/ai/morning")
       .then((res) => {
-        const text = res.data?.content || "Good morning! Let's build some great habits today.";
+        const text = res.data?.content || "Let's build some great habits today.";
         setContent(text);
         localStorage.setItem("morning-seen", today);
         localStorage.setItem("morning-content", text);
       })
       .catch((err) => {
-        console.error("Failed to load morning motivation:", err);
-        const text = "Good morning! Ready to tackle your habits today?";
+        console.error("Failed to load motivation:", err);
+        const text = "Ready to tackle your habits today?";
         setContent(text);
         // Do not cache the fallback so it can retry later
       })
       .finally(() => setLoading(false));
   }, [user?.morningMotivation]);
 
-  const isPastMorning = getISTDate().getHours() >= 12;
-  if (!user?.morningMotivation || dismissed || isPastMorning) return null;
+  if (!user?.morningMotivation || dismissed) return null;
+
+  const hour = getISTDate().getHours();
+  let greeting = "Good morning";
+  if (hour >= 12 && hour < 17) greeting = "Good afternoon";
+  else if (hour >= 17) greeting = "Good evening";
 
   return (
     <div className="relative rounded-2xl p-5 glass overflow-hidden animate-slide-up">
@@ -72,7 +74,7 @@ export default function MorningMotivation() {
         </div>
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-            Good morning, {user.name?.split(" ")[0]}
+            {greeting}, {user.name?.split(" ")[0]}
           </div>
           <div className="mt-1 text-sm">
             {loading ? (

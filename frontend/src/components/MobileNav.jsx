@@ -68,9 +68,9 @@ export default function MobileNav() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs ${isActive
-                ? "text-brand-700 dark:text-brand-300"
-                : "text-faint"
+              `flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs transition-all duration-300 ease-out active:scale-95 ${isActive
+                ? "text-brand-700 dark:text-brand-300 font-semibold"
+                : "text-faint hover:text-soft"
               }`
             }
           >
