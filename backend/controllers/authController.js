@@ -18,6 +18,9 @@ export const sendOtp = async (req, res, next) => {
     if (err.message === "User already exists" || err.message === "Valid email is required") {
       return res.status(400).json({ message: err.message });
     }
+    if (err.message === "Daily OTP limit reached. Please try again tomorrow.") {
+      return res.status(429).json({ message: err.message });
+    }
     next(err);
   }
 };

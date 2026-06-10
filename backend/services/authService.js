@@ -5,6 +5,7 @@ import Habit from "../models/habit.js";
 import HabitLog from "../models/habitlog.js";
 import AIInsight from "../models/AIInsight.js";
 import Otp from "../models/Otp.js";
+import OtpRequest from "../models/OtpRequest.js";
 import { sendOtpEmail } from "./emailService.js";
 
 class AuthService {
@@ -39,22 +40,39 @@ class AuthService {
       throw new Error("Valid email is required");
     }
     
-    const userExists = await userRepository.findByEmail(email.toLowerCase());
+    const normalizedEmail = email.toLowerCase();
+    const userExists = await userRepository.findByEmail(normalizedEmail);
     if (userExists) {
       throw new Error("User already exists");
+    }
+
+    // Check daily limit
+    const today = new Date().toISOString().split('T')[0];
+    let otpRequest = await OtpRequest.findOne({ email: normalizedEmail, date: today });
+
+    if (otpRequest && otpRequest.count >= 5) {
+      throw new Error("Daily OTP limit reached. Please try again tomorrow.");
     }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Clean up old OTPs for this email
-    await Otp.deleteMany({ email: email.toLowerCase() });
+    await Otp.deleteMany({ email: normalizedEmail });
 
     // Create new OTP
-    await Otp.create({ email: email.toLowerCase(), otp });
+    await Otp.create({ email: normalizedEmail, otp });
+
+    // Update request count
+    if (otpRequest) {
+      otpRequest.count += 1;
+      await otpRequest.save();
+    } else {
+      await OtpRequest.create({ email: normalizedEmail, date: today });
+    }
 
     // Dispatch email
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(normalizedEmail, otp);
     return true;
   }
 
