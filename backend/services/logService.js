@@ -3,6 +3,16 @@ import habitRepository from "../repositories/habitRepository.js";
 import userRepository from "../repositories/userRepository.js";
 import { todayKey, last90Days, lastNDays, calcStreak, isValidLogDate } from "../utils/dateHelpers.js";
 
+const BADGES = [
+  { id: "FIRST_STEP", xpRange: [0, 100], reqHabits: 10, reqStreak: 0, floor: 0 },
+  { id: "EXPLORER", xpRange: [100, 200], reqHabits: 0, reqStreak: 7, floor: 100 },
+  { id: "ACHIEVER", xpRange: [200, 400], reqHabits: 70, reqStreak: 14, floor: 200 },
+  { id: "GUARDIAN", xpRange: [400, 700], reqHabits: 150, reqStreak: 30, floor: 400 },
+  { id: "ELITE", xpRange: [700, 1000], reqHabits: 250, reqStreak: 60, floor: 700 },
+  { id: "TITAN", xpRange: [1000, 1500], reqHabits: 500, reqStreak: 90, floor: 1000 },
+  { id: "LEGEND", xpRange: [1500, Infinity], reqHabits: 1000, reqStreak: 180, floor: 1500 }
+];
+
 class LogService {
   async markComplete(userId, habitId, date) {
     const completedDate = date || todayKey();
@@ -20,53 +30,85 @@ class LogService {
 
     const log = await habitLogRepository.upsertLog(userId, habitId, completedDate);
     
-    // Add points for completing habit only if it was not already completed today
-    if (!existingLog) {
+    if (!log.isRewarded) {
       const user = await userRepository.findById(userId);
       const today = todayKey();
-      
-      if (user.dailyXpDate !== today) {
-        user.dailyXp = 0;
-        user.dailyXpDate = today;
-      }
-      
-      const xpToGrant = Math.max(0, Math.min(2, 14 - user.dailyXp));
-      user.dailyXp += xpToGrant;
-      user.points += xpToGrant;
-      
-      // Calculate streak
-      const logs = await habitLogRepository.findByUserIdAndHabitId(userId, habitId);
-      const dateKeys = logs.map((l) => l.completedDate);
-      const { current } = calcStreak(dateKeys);
-      
-      if (current === 7) user.points += 30;
-      if (current === 30) user.points += 150;
 
-      // Update level temporarily to check badges
-      user.level = Math.floor(user.points / 100) + 1;
+      if (!user.badges) user.badges = [];
+      if (!user.challengeFailures) user.challengeFailures = 0;
+      if (!user.totalCompletedHabits) user.totalCompletedHabits = 0;
 
-      // Check Badges
-      let badgeXP = 0;
-      if (user.points > 0 && !user.badges.includes("FIRST_HABIT")) {
-        user.badges.push("FIRST_HABIT");
-        badgeXP += 100;
-      }
-      if (current >= 7 && !user.badges.includes("STREAK_7")) {
-        user.badges.push("STREAK_7");
-        badgeXP += 100;
-      }
-      if (user.level >= 5 && !user.badges.includes("LEVEL_5")) {
-        user.badges.push("LEVEL_5");
-        badgeXP += 100;
-      }
-      
-      if (badgeXP > 0) {
-        user.points += badgeXP;
-        // Recalculate level after badge XP
+      log.isRewarded = true;
+      await log.save();
+
+      user.points += 5;
+        user.totalCompletedHabits += 1;
+
+        // Streak Check for this habit
+        const logs = await habitLogRepository.findByUserIdAndHabitId(userId, habitId);
+        const dateKeys = logs.map((l) => l.completedDate);
+        const { current } = calcStreak(dateKeys);
+
+        // Challenge Failure Penalty (If streak breaks)
+        if (current === 1 && logs.length > 1) {
+          let penaltyBadge = null;
+          for (const b of BADGES) {
+            if (user.points >= b.xpRange[0] && user.points < b.xpRange[1] && !user.badges.includes(b.id)) {
+              penaltyBadge = b;
+              break;
+            }
+          }
+          if (penaltyBadge && !["FIRST_STEP", "EXPLORER"].includes(penaltyBadge.id)) {
+            user.challengeFailures += 1;
+            const penalty = user.challengeFailures === 1 ? 25 : user.challengeFailures === 2 ? 50 : 75;
+            user.points -= penalty;
+          }
+        }
+
+        // Streak Rewards
+        if (current === 7) user.points += 25;
+        if (current === 30) user.points += 100;
+        if (current === 90) user.points += 200;
+        if (current === 180) user.points += 500;
+
+        // Max Global Streak for Badges
+        const aggregated = await habitLogRepository.aggregateLogs([
+          { $match: { userId } },
+          { $group: { _id: "$habitId", dates: { $push: "$completedDate" } } },
+        ]);
+        let maxCurrentStreak = current;
+        for (const agg of aggregated) {
+          const st = calcStreak(agg.dates).current;
+          if (st > maxCurrentStreak) maxCurrentStreak = st;
+        }
+
+        // Check Badges
+        for (const b of BADGES) {
+          if (!user.badges.includes(b.id)) {
+            if (user.points >= b.xpRange[0] && user.totalCompletedHabits >= b.reqHabits && maxCurrentStreak >= b.reqStreak) {
+              user.badges.push(b.id);
+              user.challengeFailures = 0; // Reset failures on successful challenge
+            }
+          }
+        }
+
+        // Enforce XP Floor (Badge Protection System)
+        let maxFloor = 0;
+        for (const unlocked of user.badges) {
+          const def = BADGES.find(x => x.id === unlocked);
+          if (def && def.floor > maxFloor) maxFloor = def.floor;
+        }
+        user.points = Math.max(maxFloor, user.points);
+
         user.level = Math.floor(user.points / 100) + 1;
-      }
-      
-      await userRepository.save(user);
+        await userRepository.save(user);
+
+        try {
+          const { getIo } = await import("../socket.js");
+          getIo().emit("leaderboard_update");
+        } catch (e) {
+          console.error("Socket emit failed", e.message);
+        }
     }
     
     return log;
@@ -81,10 +123,7 @@ class LogService {
 
     const result = await habitLogRepository.deleteLog(userId, habitId, completedDate);
     
-    // Deduct points for uncompleting only if a log was actually deleted
-    if (result) {
-      await userRepository.updatePointsAndLevel(userId, -2);
-    }
+    // XP is NO LONGER deducted when uncompleting a habit.
     
     return result;
   }

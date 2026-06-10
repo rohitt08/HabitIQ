@@ -4,7 +4,11 @@ export const markComplete = async (req, res, next) => {
   try {
     const { habitId, date } = req.body;
     const log = await logService.markComplete(req.user._id, habitId, date);
-    res.status(201).json(log);
+    // Fetch the fresh user object to return immediately
+    const userRepository = (await import("../repositories/userRepository.js")).default;
+    const updatedUser = await userRepository.findById(req.user._id);
+    
+    res.status(201).json({ log, user: updatedUser });
   } catch (err) {
     if (err.message === "Habit not found") {
       return res.status(404).json({ message: err.message });

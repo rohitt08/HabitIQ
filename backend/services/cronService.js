@@ -11,19 +11,19 @@ const privateVapidKey = process.env.VAPID_PRIVATE_KEY || "F2F_0_oKsURPBQ9LD9_IVg
 webpush.setVapidDetails("mailto:test@example.com", publicVapidKey, privateVapidKey);
 
 const morningMessages = [
-  "Wakey wakey! ☀️ Your habits are missing you. Let's crush today!",
-  "Coffee? ☕ Checked. Habits? Let's get 'em done!",
-  "A new day, a new streak! 🚀 Time to level up.",
-  "Your future self is watching. Make them proud today! 👑",
-  "Don't let your streaks ghost you! 👻 Jump in now."
+  "✨ Wakey wakey! Your habits are missing you. Let's crush today!",
+  "☕ Coffee? Checked. Habits? Let's get 'em done!",
+  "🚀 A new day, a new streak! Time to level up.",
+  "👑 Your future self is watching. Make them proud today!",
+  "👻 Don't let your streaks ghost you! Jump in now."
 ];
 
 const eveningMessages = [
-  "Dinner is eaten, but your habits are starving! 🥺 You have {count} habits left today.",
-  "The sun's going down, but your streaks don't have to! 🌅 {count} habits waiting.",
-  "Knock knock! Who's there? It's {count} pending habits. Open the app! 🚪",
-  "Your bed is calling, but {count} habits are calling louder! 🛏️",
-  "Finish strong! 💪 Only {count} habits left before midnight strikes."
+  "🥺 Dinner is eaten, but your habits are starving! You have {count} habits left today.",
+  "🌅 The sun's going down, but your streaks don't have to! {count} habits waiting.",
+  "🚪 Knock knock! Who's there? It's {count} pending habits. Open the app!",
+  "🛏️ Your bed is calling, but {count} habits are calling louder!",
+  "💪 Finish strong! Only {count} habits left before midnight strikes."
 ];
 
 const getRandomMessage = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -70,10 +70,10 @@ export const startCronJobs = () => {
         let body = "";
 
         if (isMorningKickstart) {
-          title = "Rise & Shine! 🌅";
+          title = "HabitIQ ☀️ Rise & Shine!";
           body = getRandomMessage(morningMessages);
         } else if (isUsersReminderTime) {
-          title = "Habit Check! 👀";
+          title = "HabitIQ 👀 Habit Check!";
           body = getRandomMessage(eveningMessages).replace("{count}", pending.length);
         } else {
           // Fallback just in case

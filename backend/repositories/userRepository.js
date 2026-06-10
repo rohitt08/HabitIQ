@@ -31,6 +31,23 @@ class UserRepository {
     // Simple leveling logic: 100 points per level
     user.level = Math.floor(user.points / 100) + 1;
     
+    // Enforce Badge XP Floor
+    const BADGES = [
+      { id: "FIRST_STEP", floor: 0 },
+      { id: "EXPLORER", floor: 100 },
+      { id: "ACHIEVER", floor: 200 },
+      { id: "GUARDIAN", floor: 400 },
+      { id: "ELITE", floor: 700 },
+      { id: "TITAN", floor: 1000 },
+      { id: "LEGEND", floor: 1500 }
+    ];
+    let maxFloor = 0;
+    for (const b of (user.badges || [])) {
+      const def = BADGES.find(x => x.id === b);
+      if (def && def.floor > maxFloor) maxFloor = def.floor;
+    }
+    user.points = Math.max(maxFloor, user.points);
+
     return await this.save(user);
   }
 

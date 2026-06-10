@@ -44,6 +44,11 @@ const userSchema = new mongoose.Schema(
       default: 1,
     },
 
+    friends: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user"
+    }],
+
     badges: {
       type: [String],
       default: [],
@@ -57,6 +62,18 @@ const userSchema = new mongoose.Schema(
     dailyXpDate: {
       type: String,
       default: "",
+    },
+
+    totalCompletedHabits: {
+      type: Number,
+      default: 0,
+    },
+
+
+
+    challengeFailures: {
+      type: Number,
+      default: 0,
     },
 
     pushSubscription: {
@@ -73,6 +90,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       required: true,
+    },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+      },
+    },
+
+    locationEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -100,5 +132,6 @@ userSchema.methods.toJSON = function () {
 };
 
 userSchema.index({ points: -1 });
+userSchema.index({ location: "2dsphere" });
 
 export default mongoose.model("user", userSchema);

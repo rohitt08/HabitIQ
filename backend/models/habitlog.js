@@ -25,6 +25,11 @@ const habitLogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    isRewarded: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

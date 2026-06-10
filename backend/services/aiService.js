@@ -86,7 +86,7 @@ class AIService {
     });
 
     if (!ok) {
-      throw new Error(content);
+      console.warn("AI Service failed or took too long, falling back to default suggestions:", content);
     }
 
     let suggestions = [];
