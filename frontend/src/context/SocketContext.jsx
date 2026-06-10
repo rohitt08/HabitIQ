@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 
 const SocketContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSocket = () => {
   return useContext(SocketContext);
 };
@@ -20,6 +21,7 @@ export const SocketProvider = ({ children }) => {
         withCredentials: true, // Send cookies automatically
       });
 
+      // eslint-disable-next-line
       setSocket(newSocket);
 
       newSocket.on("connect_error", (err) => {
@@ -35,6 +37,7 @@ export const SocketProvider = ({ children }) => {
         setSocket(null);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (

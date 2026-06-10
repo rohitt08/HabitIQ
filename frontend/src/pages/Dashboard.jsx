@@ -75,7 +75,7 @@ export default function Dashboard() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewDate]);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function Dashboard() {
       }
     };
     fetchHeatmap();
-  }, [heatmapOffset]);
+  }, [heatmapOffset, loading]);
 
   const lastToday = useRef(todayKey());
 
@@ -105,7 +105,7 @@ export default function Dashboard() {
   useEffect(() => {
     const interval = setInterval(() => {
       const currentToday = todayKey();
-      
+
       // If the actual 'today' has changed (e.g. crossed midnight or user changed clock)
       if (currentToday !== lastToday.current) {
         // Only force the viewDate to update if the user was actually viewing the "old" today.
@@ -191,12 +191,12 @@ export default function Dashboard() {
       setStreaksById((prev) => {
         const s = prev[habit._id] || { current: 0, longest: 0 };
         const nextCur = s.current + 1;
-        return { 
-          ...prev, 
-          [habit._id]: { current: nextCur, longest: Math.max(s.longest, nextCur) } 
+        return {
+          ...prev,
+          [habit._id]: { current: nextCur, longest: Math.max(s.longest, nextCur) }
         };
       });
-      
+
       celebrate();
       setTimeout(() => {
         const nextDone = completedToday.size + 1; // It was incremented optimistically
@@ -207,10 +207,10 @@ export default function Dashboard() {
 
       try {
         const res = await api.post("/logs", { habitId: habit._id, date: viewDate });
-        
+
         // The backend now returns { log, user }
         setTodayLogs((logs) => logs.map(l => l._id === tempLog._id ? (res.data.log || res.data) : l));
-        
+
         if (res.data.user) {
           updateUser(res.data.user);
         }
@@ -311,7 +311,7 @@ export default function Dashboard() {
       </div>
       <div className="h-24 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>)}
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>)}
       </div>
       <div className="h-64 bg-gray-100 dark:bg-gray-800/50 rounded-2xl mt-6"></div>
     </div>
@@ -352,8 +352,8 @@ export default function Dashboard() {
               )}
             </div>
             <div className="w-full sm:w-48 h-2 bg-indigo-200 dark:bg-indigo-950 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
                 style={{ width: `${(user?.points || 0) % 100}%` }}
               />
             </div>
@@ -422,7 +422,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div>
               <div className="text-sm font-medium flex items-center gap-2 max-w-[200px] sm:max-w-md">
-                <button 
+                <button
                   onClick={() => setViewDate(toKey(subDays(new Date(viewDate), 1)))}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition shrink-0"
                 >
@@ -431,7 +431,7 @@ export default function Dashboard() {
                 <h2 className="text-lg sm:text-xl font-semibold truncate">
                   {viewDate === todayKey() ? "Today's habits" : viewDate === toKey(subDays(getISTDate(), 1)) ? "Yesterday's habits" : shortDate(new Date(viewDate))}
                 </h2>
-                <button 
+                <button
                   onClick={() => setViewDate(toKey(subDays(new Date(viewDate), -1)))}
                   disabled={viewDate === todayKey()}
                   className={`p-1 rounded-md transition shrink-0 ${viewDate === todayKey() ? "opacity-30 cursor-not-allowed" : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
@@ -502,11 +502,11 @@ export default function Dashboard() {
           <Leaderboard />
         </div>
         <div className="lg:col-span-4 min-w-0 flex flex-col gap-5">
-          <HeatmapChart 
-            data={heatmap} 
-            offset={heatmapOffset} 
-            onPrevious={() => setHeatmapOffset(prev => prev + 90)} 
-            onNext={() => setHeatmapOffset(prev => Math.max(0, prev - 90))} 
+          <HeatmapChart
+            data={heatmap}
+            offset={heatmapOffset}
+            onPrevious={() => setHeatmapOffset(prev => prev + 90)}
+            onNext={() => setHeatmapOffset(prev => Math.max(0, prev - 90))}
           />
           <FriendsManager />
         </div>

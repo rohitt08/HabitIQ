@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: './backend/package-lock.json'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
 
   docker:
     name: Test Docker Build

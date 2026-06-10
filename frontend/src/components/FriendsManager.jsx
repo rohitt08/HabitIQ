@@ -22,8 +22,22 @@ export default function FriendsManager() {
 
   const fetchRef = useRef(null);
 
+  const fetchFriends = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const res = await api.get("/friends");
+      setFriends(res.data);
+    } catch (err) {
+      console.error("Error fetching friends:", err);
+      if (showLoading) setError("Your friends seem to be hiding right now! Try refreshing.");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRef.current = fetchFriends;
+    // eslint-disable-next-line
     fetchFriends();
     
     // Listen for external updates (optional, if we want sync from elsewhere)
@@ -51,20 +65,7 @@ export default function FriendsManager() {
     };
   }, [socket]);
 
-  const fetchFriends = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const res = await api.get("/friends");
-      setFriends(res.data);
-    } catch (err) {
-      console.error("Error fetching friends:", err);
-      if (showLoading) setError("Your friends seem to be hiding right now! Try refreshing.");
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
-
-  const handleSearch = async (e) => {
+    const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchTag.trim()) return;
 
@@ -110,6 +111,7 @@ export default function FriendsManager() {
       // Notify other components (like Leaderboard) to sync
       window.dispatchEvent(new Event("friends_updated"));
     } catch (err) {
+      console.error(err);
       setError("Failed to remove friend.");
       setRemoveModalOpen(false);
     }

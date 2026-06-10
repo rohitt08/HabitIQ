@@ -24,7 +24,6 @@ export default function Leaderboard() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [friendsData, setFriendsData] = useState(null);
-  const [friendsLoading, setFriendsLoading] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(authUser?.locationEnabled || false);
   const [locationLoading, setLocationLoading] = useState(false);
   
@@ -45,7 +44,7 @@ export default function Leaderboard() {
         
         try {
           await api.post("/leaderboard/location/toggle", { enabled: false });
-        } catch (err) {
+        } catch {
           // Revert on error
           setLocationEnabled(true);
           updateUser({ ...authUser, locationEnabled: true });
@@ -76,7 +75,7 @@ export default function Leaderboard() {
 
               await api.post("/leaderboard/location/toggle", { enabled: true, lat: latitude, lng: longitude });
               fetchNearby(false); // Fetch the list now that we're registered
-            } catch (err) {
+            } catch {
               setLocationEnabled(false);
               updateUser({ ...authUser, locationEnabled: false });
               setLocationError("Failed to enable location sharing.");
@@ -140,7 +139,7 @@ export default function Leaderboard() {
               setNearbyLoading(false);
             }
           },
-          (error) => {
+          () => {
             setLocationError("Location access denied.");
             setNearbyLoading(false);
           }
@@ -205,6 +204,7 @@ export default function Leaderboard() {
       fetchNearby(false);
     }
     fetchNearbyRef.current = fetchNearby;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, locationEnabled, authUser?.points]);
 
   useEffect(() => {
@@ -223,15 +223,12 @@ export default function Leaderboard() {
   }, [authUser?.points]);
 
   useEffect(() => {
-    const fetchFriends = async (showLoading = true) => {
+    const fetchFriends = async () => {
       try {
-        if (showLoading) setFriendsLoading(true);
         const res = await api.get("/leaderboard/friends");
         setFriendsData(res.data);
       } catch (err) {
         console.error("Error fetching friends leaderboard", err);
-      } finally {
-        if (showLoading) setFriendsLoading(false);
       }
     };
 
