@@ -12,6 +12,7 @@ import habitRoutes from "./routes/habits.js";
 import logRoutes from "./routes/logs.js";
 import aiRoutes from "./routes/ai.js";
 import leaderboardRoutes from "./routes/leaderboard.js";
+import friendRoutes from "./routes/friends.js";
 
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 import { requestLogger } from "./middleware/requestLogger.js";
@@ -69,17 +70,24 @@ app.use("/api/habits", habitRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/friends", friendRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 import { startCronJobs } from "./services/cronService.js";
+import { createServer } from "http";
+import { initSocket } from "./socket.js";
 
 const PORT = process.env.PORT || 8000;
 
 connectDB().then(() => {
     startCronJobs();
-    app.listen(PORT, "0.0.0.0", () => {
+    
+    const server = createServer(app);
+    initSocket(server, corsOptions);
+    
+    server.listen(PORT, "0.0.0.0", () => {
         logger.info(`Server running on http://localhost:${PORT}`);
     });
 });
