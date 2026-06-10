@@ -16,18 +16,14 @@ const createTransporter = async () => {
         });
     }
 
-    // Fallback to Ethereal mock for development if no SMTP config is present
-    logger.info("No SMTP config found. Creating mock Ethereal account...");
-    const testAccount = await nodemailer.createTestAccount();
-    return nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
-        },
-    });
+    // Fallback to mock for development/missing config if no SMTP config is present
+    logger.info("No SMTP config found. Creating mock transporter that logs to console...");
+    return {
+        sendMail: async (mailOptions) => {
+            logger.info(`[MOCK EMAIL] To: ${mailOptions.to}\nSubject: ${mailOptions.subject}\nText: ${mailOptions.text}`);
+            return { messageId: "mock-id-12345" };
+        }
+    };
 };
 
 export const sendOtpEmail = async (email, otp, purpose = "registration") => {
