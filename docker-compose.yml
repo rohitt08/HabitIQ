@@ -1,28 +1,31 @@
 services:
   server:
     build: ./backend
-    image: habitiq-server:V3.0.1
+    image: habitiq-server:V4.0.0
     container_name: habit-server
     ports:
       - "8000:8000"
     env_file:
       - ./backend/.env
     environment:
-      - CLIENT_URL=http://localhost:3000
+      - CLIENT_URL=http://localhost:5173,http://localhost:3000
       - NODE_ENV=production
     networks:
       - fullstack-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8000/api/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
 
   client:
-    build: ./frontend
-    image: habitiq-client:V3.0.1
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:8000/api
+    image: habitiq-client:V4.0.0
     container_name: habit-client
     ports:
       - "3000:8080"
@@ -35,7 +38,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/" ]
       interval: 30s
       timeout: 10s
       retries: 3
