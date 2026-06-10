@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 
 const AuthContext = createContext(null);
@@ -7,6 +8,7 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
@@ -21,6 +23,9 @@ export const AuthProvider = ({ children }) => {
       .then((res) => {
         setUser(res.data.user);
         localStorage.setItem("user", JSON.stringify(res.data.user));
+        if (res.data.token) {
+          localStorage.setItem("token", res.data.token);
+        }
       })
       .catch(() => {
         localStorage.removeItem("user");
@@ -30,8 +35,8 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
+  const login = async (email, password, rememberMe = false) => {
+    const res = await api.post("/auth/login", { email, password, rememberMe });
     localStorage.setItem("user", JSON.stringify(res.data.user));
     if (res.data.token) {
       localStorage.setItem("token", res.data.token);
@@ -50,8 +55,8 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const register = async (name, email, password, otp) => {
-    const res = await api.post("/auth/register", { name, email, password, otp });
+  const register = async (name, email, password, otp, rememberMe = false) => {
+    const res = await api.post("/auth/register", { name, email, password, otp, rememberMe });
     localStorage.setItem("user", JSON.stringify(res.data.user));
     if (res.data.token) {
       localStorage.setItem("token", res.data.token);
@@ -70,8 +75,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("ai-chat");
     sessionStorage.removeItem("ai-chat");
+    navigate("/");
     setUser(null);
-    window.location.href = "/";
   };
 
   const updateUser = (u) => {

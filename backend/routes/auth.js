@@ -12,7 +12,9 @@ import {
     savePushSubscription,
     removePushSubscription,
     getVapidPublicKey,
-    deleteAccount
+    deleteAccount,
+    forgotPassword,
+    resetPassword
  } from "../controllers/authController.js"
 
 import { protect } from "../middleware/auth.js";
@@ -35,10 +37,20 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const otpLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours window
+  limit: 7, // hard limit of 7 OTP requests per day
+  message: { message: "You have reached the maximum number of OTP requests (7 per day). Please try again tomorrow." },
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
+
 const router = express.Router();
 
-router.post("/send-otp", registerLimiter, sendOtp);
+router.post("/send-otp", otpLimiter, sendOtp);
 router.post("/verify-otp", registerLimiter, verifyOtp);
+router.post("/forgot-password", otpLimiter, forgotPassword);
+router.post("/reset-password", loginLimiter, resetPassword);
 router.post("/register", registerLimiter, register);
 router.post("/login", loginLimiter, login);
 router.post("/logout", logout);

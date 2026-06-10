@@ -38,14 +38,55 @@ export const verifyOtp = async (req, res, next) => {
   }
 };
 
-export const register = async (req, res, next) => {
+export const forgotPassword = async (req, res, next) => {
   try {
-    const { user, token } = await authService.registerUser(req.body);
+    const { email } = req.body;
+    await authService.sendPasswordResetOtp(email);
+    res.json({ message: "Password reset code sent to email" });
+  } catch (err) {
+    if (err.message === "No account found with this email" || err.message === "Valid email is required") {
+      return res.status(400).json({ message: err.message });
+    }
+    if (err.message === "Daily OTP limit reached. Please try again tomorrow.") {
+      return res.status(429).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const { user, token } = await authService.resetPassword(email, otp, newPassword);
 
     res.cookie("jwt", token, {
       ...getCookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
+
+    res.json({ message: "Password reset successfully", user, token });
+  } catch (err) {
+    if (err.message === "Invalid or expired verification code" || 
+        err.message === "Email, verification code, and new password are required" ||
+        err.message === "Valid password (at least 8 characters) is required" ||
+        err.message === "User not found") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
+export const register = async (req, res, next) => {
+  try {
+    const { rememberMe, ...userData } = req.body;
+    const { user, token } = await authService.registerUser(userData, rememberMe);
+
+    const cookieOptions = getCookieOptions();
+    if (rememberMe) {
+      cookieOptions.maxAge = 48 * 60 * 60 * 1000;
+    }
+
+    res.cookie("jwt", token, cookieOptions);
 
     res.status(201).json({ user, token });
   } catch (err) {
@@ -65,18 +106,20 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    const { user, token } = await authService.loginUser(email, password);
+    const { user, token } = await authService.loginUser(email, password, rememberMe);
 
-    res.cookie("jwt", token, {
-      ...getCookieOptions(),
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    const cookieOptions = getCookieOptions();
+    if (rememberMe) {
+      cookieOptions.maxAge = 48 * 60 * 60 * 1000;
+    }
+
+    res.cookie("jwt", token, cookieOptions);
 
     res.json({ user, token });
   } catch (err) {
@@ -89,7 +132,17 @@ export const login = async (req, res, next) => {
 
 export const me = async (req, res, next) => {
   try {
-    res.json({ user: req.user });
+    let responseData = { user: req.user };
+
+    if (req.tokenPayload && req.tokenPayload.rememberMe) {
+      const newToken = authService.signToken(req.user._id, true);
+      const cookieOptions = getCookieOptions();
+      cookieOptions.maxAge = 48 * 60 * 60 * 1000;
+      res.cookie("jwt", newToken, cookieOptions);
+      responseData.token = newToken;
+    }
+
+    res.json(responseData);
   } catch (err) {
     next(err);
   }

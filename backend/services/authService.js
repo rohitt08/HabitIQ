@@ -9,9 +9,9 @@ import OtpRequest from "../models/OtpRequest.js";
 import { sendOtpEmail } from "./emailService.js";
 
 class AuthService {
-  signToken(id) {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
+  signToken(id, rememberMe = false) {
+    return jwt.sign({ id, rememberMe }, process.env.JWT_SECRET, {
+      expiresIn: rememberMe ? "48h" : "24h",
     });
   }
 
@@ -76,6 +76,47 @@ class AuthService {
     return true;
   }
 
+  async sendPasswordResetOtp(email) {
+    if (!email || typeof email !== "string" || !email.trim()) {
+      throw new Error("Valid email is required");
+    }
+    
+    const normalizedEmail = email.toLowerCase();
+    const userExists = await userRepository.findByEmail(normalizedEmail);
+    if (!userExists) {
+      throw new Error("No account found with this email");
+    }
+
+    // Check daily limit
+    const today = new Date().toISOString().split('T')[0];
+    let otpRequest = await OtpRequest.findOne({ email: normalizedEmail, date: today });
+
+    if (otpRequest && otpRequest.count >= 5) {
+      throw new Error("Daily OTP limit reached. Please try again tomorrow.");
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Clean up old OTPs for this email
+    await Otp.deleteMany({ email: normalizedEmail });
+
+    // Create new OTP
+    await Otp.create({ email: normalizedEmail, otp });
+
+    // Update request count
+    if (otpRequest) {
+      otpRequest.count += 1;
+      await otpRequest.save();
+    } else {
+      await OtpRequest.create({ email: normalizedEmail, date: today });
+    }
+
+    // Dispatch email
+    await sendOtpEmail(normalizedEmail, otp, "password_reset");
+    return true;
+  }
+
   async verifyOtp(email, otp) {
     if (!email || !otp) {
       throw new Error("Email and OTP are required");
@@ -89,7 +130,7 @@ class AuthService {
     return true;
   }
 
-  async registerUser(userData) {
+  async registerUser(userData, rememberMe = false) {
     const { name, email, password } = userData;
 
     if (!name || typeof name !== "string" || !name.trim()) {
@@ -126,18 +167,44 @@ class AuthService {
       userTag,
     });
 
+    const token = this.signToken(user._id, rememberMe);
+    return { user, token };
+  }
+
+  async resetPassword(email, otp, newPassword) {
+    if (!email || !otp || !newPassword) {
+      throw new Error("Email, verification code, and new password are required");
+    }
+
+    if (newPassword.length < 8) {
+      throw new Error("Valid password (at least 8 characters) is required");
+    }
+
+    await this.verifyOtp(email, otp);
+
+    const user = await userRepository.findByEmail(email.toLowerCase());
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Consume the OTP
+    await Otp.deleteMany({ email: email.toLowerCase() });
+
+    user.password = newPassword;
+    await user.save();
+
     const token = this.signToken(user._id);
     return { user, token };
   }
 
-  async loginUser(email, password) {
+  async loginUser(email, password, rememberMe = false) {
     const user = await userRepository.findByEmail(email.toLowerCase());
 
     if (!user || !(await user.matchPassword(password))) {
       throw new Error("Invalid email or password");
     }
 
-    const token = this.signToken(user._id);
+    const token = this.signToken(user._id, rememberMe);
     return { user, token };
   }
 

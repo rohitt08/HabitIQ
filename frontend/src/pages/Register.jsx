@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Sparkles, Sun, Moon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Sparkles, Sun, Moon, ArrowRight, CheckCircle2, Eye, EyeOff, Timer } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -11,10 +11,22 @@ export default function Register() {
 
   // Wizard state
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: Password
-  const [form, setForm] = useState({ name: "", email: "", otp: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", otp: "", password: "", confirmPassword: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   
+  const [timeLeft, setTimeLeft] = useState(300);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (step !== 2 || timeLeft <= 0) return;
+    const timerId = setInterval(() => {
+      setTimeLeft((t) => t - 1);
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [step, timeLeft]);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -24,7 +36,7 @@ export default function Register() {
   };
 
   const handleSendOtp = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!form.name.trim() || !form.email.trim()) {
       setErr("Name and email are required");
       return;
@@ -34,6 +46,7 @@ export default function Register() {
     try {
       await sendOtp(form.email);
       setStep(2);
+      setTimeLeft(300);
     } catch (e) {
       setErr(e.response?.data?.message || "Failed to send verification code");
     } finally {
@@ -65,10 +78,14 @@ export default function Register() {
       setErr("Password must be at least 8 characters");
       return;
     }
+    if (form.password !== form.confirmPassword) {
+      setErr("Passwords do not match");
+      return;
+    }
     setErr("");
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password, form.otp);
+      await register(form.name, form.email, form.password, form.otp, rememberMe);
       navigate("/dashboard", { replace: true });
     } catch (e) {
       setErr(e.response?.data?.message || "Registration failed");
@@ -199,10 +216,30 @@ export default function Register() {
               <button
                 type="submit"
                 className="btn-primary w-full py-3 mt-2 flex items-center justify-center gap-2"
-                disabled={loading || form.otp.length < 6}
+                disabled={loading || form.otp.length < 6 || timeLeft <= 0}
               >
                 {loading ? "Verifying..." : "Verify Code"}
               </button>
+
+              <div className="text-center mt-4 text-sm">
+                {timeLeft > 0 ? (
+                  <p className="flex items-center justify-center gap-1.5 text-soft">
+                    <Timer size={14} /> Code expires in: <span className="font-mono font-medium text-amber-600 dark:text-amber-400">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
+                  </p>
+                ) : (
+                  <div>
+                    <p className="text-rose-500 mb-2">Code expired</p>
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="text-brand-600 dark:text-brand-400 font-medium hover:underline flex items-center justify-center gap-1.5 mx-auto"
+                      disabled={loading}
+                    >
+                      {loading ? "Sending..." : "Resend Verification Code"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </form>
           )}
 
@@ -216,15 +253,47 @@ export default function Register() {
 
               <div>
                 <label className="label">Create a secure password</label>
-                <input
-                  className="input"
-                  type="password"
-                  value={form.password}
-                  onChange={set("password")}
-                  placeholder="At least 8 characters"
-                  required
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    className="input pr-10"
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={set("password")}
+                    placeholder="At least 8 characters"
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[var(--text)] transition-colors"
+                    tabIndex="-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Confirm password</label>
+                <div className="relative">
+                  <input
+                    className="input pr-10"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={set("confirmPassword")}
+                    placeholder="Re-enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[var(--text)] transition-colors"
+                    tabIndex="-1"
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               {err && (
@@ -233,10 +302,20 @@ export default function Register() {
                 </div>
               )}
 
+              <label className="flex items-center gap-2 cursor-pointer mt-2 mb-1">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                />
+                <span className="text-sm text-soft">Remember me</span>
+              </label>
+
               <button
                 type="submit"
                 className="btn-primary w-full py-3 mt-2"
-                disabled={loading || form.password.length < 8}
+                disabled={loading || form.password.length < 8 || !form.confirmPassword}
               >
                 {loading ? "Creating account..." : "Complete Registration"}
               </button>
