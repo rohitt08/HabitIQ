@@ -5,14 +5,22 @@ import logger from "../utils/logger.js";
 // In production, configure SMTP credentials via environment variables
 const createTransporter = async () => {
     if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+        const port = parseInt(process.env.SMTP_PORT || "587", 10);
+        // Port 465 requires secure connection (TLS). Port 587 uses STARTTLS (secure: false).
+        // Check env var but default based on port.
+        const secure = port === 465 ? true : (process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === "1");
+
         return nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT || 587,
-            secure: process.env.SMTP_SECURE === "true",
+            port: port,
+            secure: secure,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
+            connectionTimeout: 10000, // 10s connection timeout
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
         });
     }
 

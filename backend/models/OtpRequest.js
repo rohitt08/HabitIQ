@@ -15,7 +15,7 @@ const otpRequestSchema = new mongoose.Schema({
     type: Number,
     default: 1,
   },
-});
+}, { timestamps: true });
 
 // TTL index to automatically remove documents after roughly 2 days to save space
 otpRequestSchema.index({ createdAt: 1 }, { expireAfterSeconds: 172800 });
