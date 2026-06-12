@@ -8,7 +8,7 @@ const createTransporter = async () => {
         const port = parseInt(process.env.SMTP_PORT || "587", 10);
         // Port 465 requires secure connection (TLS). Port 587 uses STARTTLS (secure: false).
         // Check env var but default based on port.
-        const secure = port === 465 ? true : (process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === "1");
+        const secure = port === 465;
 
         return nodemailer.createTransport({
             host: process.env.SMTP_HOST,
