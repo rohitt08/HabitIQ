@@ -165,9 +165,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (recoveryHabit) return;
     if (!habits.length) return;
-    const dismissed = JSON.parse(
-      localStorage.getItem("recovery-dismissed") || "{}"
-    );
+    let dismissed = {};
+    try {
+      dismissed = JSON.parse(localStorage.getItem("recovery-dismissed") || "{}");
+    } catch {
+      localStorage.removeItem("recovery-dismissed");
+    }
     for (const h of habits) {
       const s = streaksById[h._id];
       if (!s) continue;
@@ -397,9 +400,12 @@ export default function Dashboard() {
         <StreakRecoveryCard
           habit={recoveryHabit}
           onDismiss={() => {
-            const dismissed = JSON.parse(
-              localStorage.getItem("recovery-dismissed") || "{}"
-            );
+            let dismissed = {};
+            try {
+              dismissed = JSON.parse(localStorage.getItem("recovery-dismissed") || "{}");
+            } catch {
+              localStorage.removeItem("recovery-dismissed");
+            }
             dismissed[recoveryHabit._id] = Date.now();
             localStorage.setItem(
               "recovery-dismissed",

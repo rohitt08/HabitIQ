@@ -90,7 +90,7 @@ export default function Insights() {
             setReport(content);
             setReportGeneratedAt(new Date(generatedAt));
           } catch {
-            // ignore cache parse errors
+            localStorage.removeItem(REPORT_CACHE_KEY(thisWeek[0].key));
           }
         } else {
           // auto-generate on first visit this week

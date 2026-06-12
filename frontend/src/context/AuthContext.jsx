@@ -10,8 +10,14 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw || raw === "undefined") return null;
+      return JSON.parse(raw);
+    } catch {
+      localStorage.removeItem("user");
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
 
