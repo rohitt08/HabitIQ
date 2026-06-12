@@ -1,109 +1,150 @@
-# HabitIQ
+# 🌟 HabitIQ
 
-![HabitIQ](https://img.shields.io/badge/Status-Active-brightgreen.svg)
-![License](https://img.shields.io/badge/License-ISC-blue.svg)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![License](https://img.shields.io/badge/License-ISC-blue.svg)]()
+[![React](https://img.shields.io/badge/React-19-blue.svg)]()
+[![Node.js](https://img.shields.io/badge/Node.js-Backend-success.svg)]()
+[![MongoDB](https://img.shields.io/badge/MongoDB-Database-brightgreen.svg)]()
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-AI%20Powered-orange.svg)]()
 
-HabitIQ is a full-stack, intelligent habit-tracking web application built using the MERN stack (MongoDB, Express.js, React, Node.js) and powered by AI. It helps users build positive routines, track their progress over time, and gain personalized, AI-driven insights (powered by Google Gemini) into their habits.
+> **HabitIQ** is an intelligent, full-stack habit-tracking application designed to help users build sustainable positive routines. Powered by the MERN stack and Google Gemini AI, HabitIQ transcends traditional tracking by offering personalized, actionable insights based on user behavior and consistency.
 
-## 🚀 Features
+---
 
-- **User Authentication**: Secure signup and login using JWT and bcrypt.
-- **Habit Management**: Create, view, update, and delete habits with ease.
-- **Weekly Tracking & Logging**: Interactive weekly views for quick logging of daily habits.
-- **Detailed Statistics**: Visual charts and graphs (via Recharts) displaying your progress, streaks, and completion rates.
-- **AI-Powered Insights**: Get actionable, intelligent insights and recommendations on your habits powered by Google Gemini GenAI.
-- **Responsive UI**: A modern, clean, and responsive user interface built with Tailwind CSS.
+## 📖 Table of Contents
+- [Architecture Overview](#-architecture-overview)
+- [Key Features](#-key-features)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Security & Integrity](#-security--integrity)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [License](#-license)
 
-## 🛠️ Technology Stack
+---
 
-### Frontend
-- **Framework**: React 19 + Vite
-- **Styling**: Tailwind CSS
-- **Routing**: React Router DOM
-- **Charts/Graphs**: Recharts
-- **Icons**: Lucide React & React Icons
-- **Drag & Drop**: @dnd-kit/core
+## 🏛️ Architecture Overview
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JSON Web Tokens (JWT) & bcryptjs
-- **AI Integration**: `@google/genai` (Google Gemini)
+HabitIQ follows a modern client-server architecture, ensuring clear separation of concerns, scalability, and maintainability:
+
+- **Client Layer (Frontend):** A Single Page Application (SPA) built with React 19 and Vite. State is managed via React Context, and navigation is handled by React Router. The UI is highly responsive and styled with Tailwind CSS, utilizing `Recharts` for data visualization.
+- **API Layer (Backend):** A robust RESTful API built on Node.js and Express. It features dedicated controllers, middleware for rate-limiting and JWT authentication, and structured routing.
+- **Data Layer:** MongoDB handles persistence via Mongoose ODM. Data schemas are heavily normalized for users, habits, and execution logs to allow for complex queries and aggregations.
+- **AI Integration:** Google Gemini (`@google/genai`) is seamlessly integrated to periodically analyze user habit logs, streak data, and completion rates to deliver personalized behavioral insights.
+
+---
+
+## ✨ Key Features
+
+- **Secure Authentication:** JWT-based stateless authentication with hashed passwords (bcrypt) and robust rate-limiting to prevent brute-force attacks.
+- **Email Verification (OTP):** Secure one-time password (OTP) verification for registration and password resets, ensuring account integrity.
+- **Comprehensive Habit Management:** Full CRUD capabilities with drag-and-drop interface for ordering habits.
+- **Interactive Dashboards:** Weekly tracking views and real-time statistics, including streak calculations and completion heatmaps.
+- **Generative AI Insights:** Analyzes user data through Google Gemini to generate encouraging feedback, routine optimization tips, and habit correlation insights.
+- **Responsive & Accessible UI:** Mobile-first design principles ensure the application looks and performs beautifully across all device sizes.
+
+---
+
+## 💻 Technology Stack
+
+### Frontend Ecosystem
+- **Core:** React 19, Vite
+- **Styling:** Tailwind CSS
+- **Routing:** React Router DOM
+- **Data Visualization:** Recharts
+- **UX Enhancements:** Lucide React (Icons), `@dnd-kit/core` (Drag & Drop)
+
+### Backend Ecosystem
+- **Core:** Node.js, Express.js
+- **Database:** MongoDB, Mongoose ODM
+- **Security:** JSON Web Tokens (JWT), bcryptjs, Helmet, express-mongo-sanitize
+- **Services:** Nodemailer (Email/OTP routing), `@google/genai` (AI Integrations)
+- **Task Scheduling:** node-cron (for periodic AI analysis and reminders)
+
+---
 
 ## 📁 Project Structure
 
 ```text
 HabitIQ/
-├── backend/               # Node.js / Express backend
-│   ├── config/            # Database and environment configurations
-│   ├── controllers/       # Route handlers containing business logic
-│   ├── middleware/        # Custom middleware (e.g., authentication)
-│   ├── models/            # Mongoose schemas (User, Habit, HabitLog, AIInsight)
-│   ├── routes/            # Express API routes
-│   ├── scripts/           # Database seeding and utility scripts
-│   ├── utils/             # Helper functions
-│   ├── server.js          # Entry point for the backend server
-│   └── package.json       # Backend dependencies and scripts
+├── backend/                  # RESTful API Service
+│   ├── config/               # Database connections and constants
+│   ├── controllers/          # Business logic and request handling
+│   ├── middleware/           # Auth, logging, and error handling
+│   ├── models/               # Mongoose schemas (User, Habit, Otp, etc.)
+│   ├── repositories/         # Data access layer abstraction
+│   ├── routes/               # API endpoint definitions
+│   ├── services/             # External service integrations (Email, AI)
+│   ├── utils/                # Helper functions and loggers
+│   └── server.js             # Application entry point
 │
-└── frontend/              # React / Vite frontend
-    ├── public/            # Static assets
+└── frontend/                 # React SPA
+    ├── public/               # Static assets
     ├── src/
-    │   ├── api/           # API integration and Axios configuration
-    │   ├── assets/        # Images, fonts, etc.
-    │   ├── components/    # Reusable React components (Layout, ProtectedRoute, etc.)
-    │   ├── context/       # React Context providers for state management
-    │   ├── pages/         # Top-level page components (Dashboard, Insights, Stats, etc.)
-    │   ├── utils/         # Frontend helper functions
-    │   ├── App.jsx        # Main application routing
-    │   ├── main.jsx       # React application entry point
-    │   └── index.css      # Global styles & Tailwind configuration
-    ├── index.html         # Main HTML template
-    ├── vite.config.js     # Vite configuration
-    └── package.json       # Frontend dependencies and scripts
+    │   ├── api/              # Axios instances and interceptors
+    │   ├── components/       # Reusable UI components
+    │   ├── context/          # Global state management
+    │   ├── pages/            # View components (Dashboard, Login, etc.)
+    │   └── App.jsx           # Root component and router
+    └── vite.config.js        # Build configuration
 ```
 
-## 🏁 Getting Started
+---
+
+## 🛡️ Security & Integrity
+
+HabitIQ is designed with security best practices in mind to protect user data:
+- **Environment Variables:** All sensitive credentials, API keys, and database URIs are strictly managed via `.env` files and are **never** committed to version control.
+- **Data Sanitization:** Implements `express-mongo-sanitize` to prevent NoSQL injection attacks.
+- **Rate Limiting:** `express-rate-limit` is used on critical endpoints (login, registration, OTP generation) to mitigate DDoS and brute-force attempts.
+- **HTTP Headers:** Uses `Helmet` to secure Express apps by setting various HTTP headers.
+- **Secure Password Storage:** Passwords are never stored in plaintext. They are hashed and salted using `bcryptjs`.
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- Node.js (v18 or higher recommended)
-- MongoDB (local or Atlas)
-- Google Gemini API Key (for AI insights)
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [MongoDB](https://www.mongodb.com/) (Local instance or MongoDB Atlas)
+- Google Gemini API Key
 
 ### Installation
 
-1. **Clone the repository:**
+1. **Clone the repository**
    ```bash
    git clone https://github.com/rohitt08/HabitIQ.git
    cd HabitIQ
    ```
 
-2. **Setup the Backend:**
+2. **Setup the Backend**
    ```bash
    cd backend
    npm install
    ```
-   - Create a `.env` file in the `backend/` directory and add your environment variables (e.g., `PORT`, `MONGO_URI`, `JWT_SECRET`, `GEMINI_API_KEY`).
-   - Run the server:
-     ```bash
-     npm run dev
-     ```
+   Create your `.env` file (see [Environment Variables](#-environment-variables)), then start the development server:
+   ```bash
+   npm run dev
+   ```
 
-3. **Setup the Frontend:**
+3. **Setup the Frontend**
    ```bash
    cd ../frontend
    npm install
    ```
-   - Create a `.env` file in the `frontend/` directory for any required frontend variables (e.g., `VITE_API_URL`).
-   - Run the development server:
-     ```bash
-     npm run dev
-     ```
+   Create your frontend `.env` file, then start the Vite development server:
+   ```bash
+   npm run dev
+   ```
 
-4. **Open in Browser:**
-   Navigate to `http://localhost:5173` (or the port Vite provides) to start using HabitIQ!
+4. **Access the Application**
+   Open `http://localhost:5173` in your browser.
+
+
 
 ## 📜 License
 
-This project is licensed under the ISC License.
+This project is licensed under the [ISC License](LICENSE).
+
+---
+*Designed with ❤️ for building better habits.*
