@@ -1,46 +1,42 @@
 import logger from "../utils/logger.js";
 
 /**
- * Brevo REST API Email Service
+ * Resend REST API Email Service
  * Completely bypasses Render's SMTP firewall block.
  */
 
-const sendEmailViaBrevo = async (toEmail, subject, htmlContent) => {
-    if (!process.env.BREVO_API_KEY || process.env.BREVO_API_KEY === 'YOUR_BREVO_API_KEY_HERE') {
-        logger.error("BREVO_API_KEY is missing or invalid in environment variables.");
+const sendEmailViaResend = async (toEmail, subject, htmlContent) => {
+    if (!process.env.RESEND_API_KEY) {
+        logger.error("RESEND_API_KEY is missing in environment variables.");
         logger.info(`[MOCK EMAIL] To: ${toEmail} | Subject: ${subject}`);
         return true;
     }
 
     try {
-        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        const response = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
-                "accept": "application/json",
-                "api-key": process.env.BREVO_API_KEY,
-                "content-type": "application/json"
+                "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                sender: { 
-                    name: "HabitIQ Team", 
-                    email: process.env.EMAIL_SENDER || "habitiq.team@gmail.com" 
-                },
-                to: [{ email: toEmail }],
+                from: process.env.EMAIL_SENDER || "HabitIQ <onboarding@resend.dev>",
+                to: [toEmail],
                 subject: subject,
-                htmlContent: htmlContent
+                html: htmlContent
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Brevo API Error: ${JSON.stringify(errorData)}`);
+            throw new Error(`Resend API Error: ${JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
-        logger.info(`Email successfully sent via Brevo to ${toEmail}. Message ID: ${data.messageId}`);
+        logger.info(`Email successfully sent via Resend to ${toEmail}. Message ID: ${data.id}`);
         return true;
     } catch (error) {
-        logger.error(`Error sending email via Brevo API: ${error.message}`);
+        logger.error(`Error sending email via Resend API: ${error.message}`);
         throw new Error("Failed to send verification email");
     }
 };
@@ -85,5 +81,5 @@ export const sendOtpEmail = async (email, otp, purpose = "registration") => {
     const subject = purpose === "password_reset" ? "Reset your HabitIQ password" : "Your HabitIQ verification code";
     const htmlContent = getOtpTemplate(otp, purpose);
     
-    return await sendEmailViaBrevo(email, subject, htmlContent);
+    return await sendEmailViaResend(email, subject, htmlContent);
 };
