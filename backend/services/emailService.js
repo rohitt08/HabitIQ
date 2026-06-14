@@ -4,7 +4,19 @@ import logger from "../utils/logger.js";
 // Mock email service for development
 // In production, configure SMTP credentials via environment variables
 const createTransporter = async () => {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        // If the user is specifically trying to use Gmail, use the native service configuration
+        // This automatically bypasses common TLS/Port issues and works perfectly with App Passwords
+        if (process.env.SMTP_HOST === 'smtp.gmail.com' || process.env.SMTP_SERVICE === 'gmail' || process.env.SMTP_USER.endsWith('@gmail.com')) {
+            return nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                }
+            });
+        }
+
         const port = parseInt(process.env.SMTP_PORT || "587", 10);
         // Port 465 requires secure connection (TLS). Port 587 uses STARTTLS (secure: false).
         // Check env var but default based on port.
@@ -18,7 +30,7 @@ const createTransporter = async () => {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
-            connectionTimeout: 10000, // 10s connection timeout
+            connectionTimeout: 10000,
             greetingTimeout: 10000,
             socketTimeout: 15000,
         });
