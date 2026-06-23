@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Sparkles, Sun, Moon, ArrowRight, CheckCircle2, Eye, EyeOff, Timer } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function Register() {

@@ -16,7 +16,7 @@ import FriendsManager from "../components/FriendsManager.jsx";
 import { celebrate, celebrateBig } from "../utils/confetti.js";
 import { getISTDate, todayKey, toKey, shortDate } from "../utils/dateHelpers.js";
 import { subDays } from "date-fns";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth();

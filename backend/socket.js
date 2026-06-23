@@ -1,6 +1,8 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { pubClient, subClient } from "./config/redis.js";
 
 let io;
 
@@ -8,6 +10,8 @@ export const initSocket = (server, corsOptions) => {
   io = new Server(server, {
     cors: corsOptions,
   });
+
+  io.adapter(createAdapter(pubClient, subClient));
 
   io.use((socket, next) => {
     try {

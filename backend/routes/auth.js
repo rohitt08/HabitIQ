@@ -1,5 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import { redisClient } from "../config/redis.js";
 import { 
     sendOtp,
     verifyOtp,
@@ -27,6 +29,10 @@ const loginLimiter = rateLimit({
   message: { message: "Too many login attempts, please try again later" },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+    prefix: 'rl:login:',
+  }),
 });
 
 const registerLimiter = rateLimit({
@@ -35,6 +41,10 @@ const registerLimiter = rateLimit({
   message: { message: "Too many accounts created from this IP, please try again after an hour" },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+    prefix: 'rl:register:',
+  }),
 });
 
 const otpLimiter = rateLimit({
@@ -43,6 +53,10 @@ const otpLimiter = rateLimit({
   message: { message: "You have reached the maximum number of OTP requests (7 per day). Please try again tomorrow." },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+    prefix: 'rl:otp:',
+  }),
 });
 
 const router = express.Router();

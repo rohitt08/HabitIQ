@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import api from "../api/axios.js";
 import { Users, UserPlus, UserMinus, Search, Loader2 } from "lucide-react";
 import Modal from "./Modal.jsx";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useSocketStore as useSocket } from "../store/socketStore.js";
 
 export default function FriendsManager() {
   const { socket } = useSocket();

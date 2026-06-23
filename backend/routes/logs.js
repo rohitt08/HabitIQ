@@ -13,12 +13,19 @@ import {
 import { protect } from "../middleware/auth.js";
 import rateLimit from "express-rate-limit";
 
+import { RedisStore } from "rate-limit-redis";
+import { redisClient } from "../config/redis.js";
+
 const logLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   limit: 30, // Limit each IP to 30 requests per minute
   message: { message: "Too many logging attempts, please try again later" },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+    prefix: 'rl:logs:',
+  }),
 });
 
 const router = express.Router();

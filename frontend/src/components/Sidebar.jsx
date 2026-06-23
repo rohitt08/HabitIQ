@@ -11,7 +11,7 @@ import {
   Moon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import { useTheme } from "../context/ThemeContext.jsx";
 import Modal from "./Modal.jsx";
 import api from "../api/axios.js";

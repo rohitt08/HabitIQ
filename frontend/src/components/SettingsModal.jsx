@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import Modal from "./Modal.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import api from "../api/axios.js";
 import TimePicker from "./TimePicker.jsx";
 

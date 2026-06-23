@@ -10,7 +10,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function MobileNav() {

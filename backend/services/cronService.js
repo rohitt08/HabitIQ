@@ -1,4 +1,5 @@
-import cron from "node-cron";
+import { Queue, Worker } from "bullmq";
+import { redisClient } from "../config/redis.js";
 import webpush from "web-push";
 import User from "../models/user.js";
 import habitRepository from "../repositories/habitRepository.js";
@@ -28,33 +29,26 @@ const eveningMessages = [
 
 const getRandomMessage = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-export const startCronJobs = () => {
-  // Run every minute, explicitly locked to Indian Standard Time
-  cron.schedule("* * * * *", async () => {
+const notificationQueue = new Queue("notificationQueue", { connection: redisClient });
+
+const notificationWorker = new Worker("notificationQueue", async (job) => {
     try {
       const now = getISTDate();
-      // Current time in HH:mm format
       const currentHHMM = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-      const isMorningPushTime = currentHHMM === "09:00"; // 9 AM Morning Kickstart
+      const isMorningPushTime = currentHHMM === "09:00"; 
 
       const usersToRemind = await User.find({
         pushSubscription: { $ne: null },
         $or: [
           { reminderTime: currentHHMM },
-          ...(isMorningPushTime ? [{}] : []) // If it's 9 AM, fetch ALL users with pushSubscription
+          ...(isMorningPushTime ? [{}] : [])
         ]
       });
 
       for (const user of usersToRemind) {
-        // If it's 9 AM but the user's reminder time is also 9 AM, we don't want to send 2 pushes.
-        // We will send the Evening (pending count) message if it's their specific reminder time.
-        // Otherwise, send the morning kickstart.
         const isUsersReminderTime = user.reminderTime === currentHHMM;
-        
-        // At 9 AM, if it's NOT their chosen reminder time, it's the morning kickstart.
         const isMorningKickstart = isMorningPushTime && !isUsersReminderTime;
 
-        // Fetch user's active habits
         const habits = await habitRepository.findByUserId(user._id, false);
         if (habits.length === 0) continue;
 
@@ -63,7 +57,6 @@ export const startCronJobs = () => {
 
         const pending = habits.filter(h => !completedHabitIds.includes(h._id.toString()));
 
-        // If they have no pending habits, don't bother them!
         if (pending.length === 0) continue;
 
         let title = "HabitIQ";
@@ -76,7 +69,6 @@ export const startCronJobs = () => {
           title = "HabitIQ 👀 Habit Check!";
           body = getRandomMessage(eveningMessages).replace("{count}", pending.length);
         } else {
-          // Fallback just in case
           continue;
         }
 
@@ -94,7 +86,6 @@ export const startCronJobs = () => {
           await webpush.sendNotification(user.pushSubscription, payload);
         } catch (err) {
           console.error("Error sending push to user", user._id, err);
-          // If subscription is invalid/expired, remove it
           if (err.statusCode === 410 || err.statusCode === 404) {
             user.pushSubscription = null;
             await user.save();
@@ -102,9 +93,16 @@ export const startCronJobs = () => {
         }
       }
     } catch (error) {
-      console.error("Cron job error:", error);
+      console.error("Worker job error:", error);
     }
-  }, {
-    timezone: "Asia/Kolkata"
-  });
+}, { connection: redisClient });
+
+export const startCronJobs = async () => {
+    // Add repeatable job to run every minute
+    await notificationQueue.add("checkNotifications", {}, {
+        repeat: {
+            pattern: "* * * * *",
+            tz: "Asia/Kolkata"
+        }
+    });
 };

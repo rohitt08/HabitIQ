@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import LoadingSpinner from "./LoadingSpinner.jsx";
 
 export default function ProtectedRoute({ children }) {

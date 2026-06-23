@@ -44,12 +44,18 @@ app.set("trust proxy", 1); // Trust first proxy for correct IP identification be
 app.use(helmet());
 app.use(compression());
 
+import { RedisStore } from "rate-limit-redis";
+import { redisClient } from "./config/redis.js";
+
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     limit: 200, // Limit each IP to 200 requests per windowMs (prevent DoS)
     message: "Too many requests from this IP, please try again later",
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    store: new RedisStore({
+        sendCommand: (...args) => redisClient.call(...args),
+    }),
 });
 app.use(globalLimiter);
 

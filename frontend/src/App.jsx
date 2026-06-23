@@ -12,7 +12,26 @@ const Habits = lazy(() => import("./pages/Habits.jsx"));
 const Weekly = lazy(() => import("./pages/Weekly.jsx"));
 const Insights = lazy(() => import("./pages/Insights.jsx"));
 
+import { useAuthStore } from "./store/authStore.js";
+import { useSocketStore } from "./store/socketStore.js";
+import { useEffect } from "react";
+
 export default function App() {
+  const { initialize, user } = useAuthStore();
+  const { connect, disconnect } = useSocketStore();
+
+  useEffect(() => {
+    initialize();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      connect();
+    } else {
+      disconnect();
+    }
+  }, [user]);
+
   return (
     <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><LoadingSpinner /></div>}>
       <Routes>

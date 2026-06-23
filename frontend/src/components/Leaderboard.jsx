@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../api/axios.js";
 import { Trophy, Award, Medal, Crown, Star, Info, ShieldAlert, Users, MapPin } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
-import { useSocket } from "../context/SocketContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
+import { useSocketStore as useSocket } from "../store/socketStore.js";
 import Modal from "./Modal.jsx";
 
 const rankStyles = {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Sparkles, Sun, Moon, Eye, EyeOff, Timer } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import { useTheme } from "../context/ThemeContext.jsx";
 import api from "../api/axios.js";
 import Modal from "../components/Modal.jsx";

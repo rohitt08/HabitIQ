@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Sun, X } from "lucide-react";
 import api from "../api/axios.js";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthStore as useAuth } from "../store/authStore.js";
 import Markdown from "./Markdown.jsx";
 import { format } from "date-fns";
 
